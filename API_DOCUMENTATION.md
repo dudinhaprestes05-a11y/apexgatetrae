@@ -60,60 +60,33 @@ const headers = {
 };
 ```
 
-### Métodos de Compatibilidade
+### Método Alternativo: Headers Customizados
 
-Para compatibilidade com integrações antigas, também suportamos:
+Para compatibilidade com integrações antigas, também suportamos autenticação via headers customizados (requer API Key + API Secret):
 
-**1. Bearer Token:**
-```
-Authorization: Bearer sua_api_key
-Content-Type: application/json
-```
-
-**2. X-API-Key Header:**
+**X-API-Key + X-API-Secret:**
 ```
 X-API-Key: sua_api_key
+X-API-Secret: seu_api_secret
 Content-Type: application/json
 ```
 
-**3. X-API-Key + HMAC Signature (legado):**
-```
-X-API-Key: sua_api_key
-X-Signature: hmac_sha256(request_body, api_secret)
-Content-Type: application/json
-```
-
-#### Gerando a Assinatura HMAC (método legado)
-
-**PHP:**
-```php
-$payload = json_encode($data);
-$signature = hash_hmac('sha256', $payload, $api_secret);
+**Exemplo cURL:**
+```bash
+curl -X POST https://gateway.seudominio.com/api/pix/create \
+  -H "X-API-Key: sua_api_key" \
+  -H "X-API-Secret: seu_api_secret" \
+  -H "Content-Type: application/json" \
+  -d '{"amount": 100.50}'
 ```
 
-**Python:**
-```python
-import hmac
-import hashlib
-import json
+### Segurança da Autenticação
 
-payload = json.dumps(data)
-signature = hmac.new(
-    api_secret.encode(),
-    payload.encode(),
-    hashlib.sha256
-).hexdigest()
-```
-
-**Node.js:**
-```javascript
-const crypto = require('crypto');
-const payload = JSON.stringify(data);
-const signature = crypto
-  .createHmac('sha256', apiSecret)
-  .update(payload)
-  .digest('hex');
-```
+- O **API Secret** enviado na requisição é convertido para hash SHA256 antes da comparação
+- Nunca armazene credenciais em texto plano no código
+- Use variáveis de ambiente para armazenar API Key e API Secret
+- Todas as requisições devem usar HTTPS
+- O API Secret nunca é retornado nas respostas da API
 
 ## Endpoints
 

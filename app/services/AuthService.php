@@ -33,25 +33,8 @@ class AuthService {
         if (isset($authData['type']) && $authData['type'] === 'basic') {
             $seller = $this->authenticateBasicAuth($authData['api_key'], $authData['api_secret']);
         } else {
-            $seller = $this->sellerModel->findByApiKey($authData['api_key']);
-
-            if (!$seller) {
-                $this->logModel->warning('auth', 'Invalid API Key', ['api_key' => $authData['api_key'], 'ip' => getClientIp()]);
-                errorResponse('Invalid credentials', 401);
-            }
-
-            $signature = $this->getSignatureFromHeaders();
-            $body = file_get_contents('php://input');
-
-            if ($signature && $body) {
-                if (!verifyHmacSignature($body, $signature, $seller['api_secret'])) {
-                    $this->logModel->warning('auth', 'Invalid HMAC signature', [
-                        'seller_id' => $seller['id'],
-                        'ip' => getClientIp()
-                    ]);
-                    errorResponse('Invalid signature', 401);
-                }
-            }
+            $this->logModel->warning('auth', 'API Secret is required', ['api_key' => $authData['api_key'] ?? 'N/A', 'ip' => getClientIp()]);
+            errorResponse('API Secret is required for authentication', 401);
         }
 
         if ($seller['status'] !== 'active') {
@@ -73,6 +56,7 @@ class AuthService {
             errorResponse('Invalid credentials', 401);
         }
 
+        // Hash do API Secret recebido para comparar com o hash armazenado no banco
         $hashedApiSecret = hash('sha256', $apiSecret);
 
         if (APP_ENV === 'development') {
@@ -168,10 +152,6 @@ class AuthService {
         return null;
     }
 
-    private function getSignatureFromHeaders() {
-        $headers = getAllHeadersCaseInsensitive();
-        return $headers['X-Signature'] ?? null;
-    }
 
     public function checkRateLimit($identifier, $endpoint) {
         $db = db();
