@@ -178,18 +178,16 @@ class PixController {
             'amount' => $amount
         ]);
 
-        $transaction = $this->pixCashinModel->findByTransactionId($transactionId);
-
         successResponse([
             'transaction_id' => $transactionId,
             'amount' => $amount,
             'fee_amount' => $feeAmount,
             'net_amount' => $netAmount,
-            'qrcode' => $transaction['qrcode'],
-            'qrcode_base64' => $transaction['qrcode_base64'],
-            'pix_key' => $transaction['pix_key'],
-            'expires_at' => $transaction['expires_at'],
-            'status' => $transaction['status']
+            'qrcode' => $acquirerResponse['data']['qrcode'] ?? null,
+            'qrcode_base64' => $acquirerResponse['data']['qrcode_base64'] ?? null,
+            'pix_key' => $acquirerResponse['data']['pix_key'] ?? null,
+            'expires_at' => $acquirerResponse['data']['expiration_date'] ?? date('Y-m-d H:i:s', strtotime("+{$expiresInMinutes} minutes")),
+            'status' => $acquirerResponse['data']['status'] ?? 'pending'
         ], 'PIX transaction created successfully');
     }
 
