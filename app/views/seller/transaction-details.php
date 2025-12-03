@@ -128,8 +128,8 @@ require_once __DIR__ . '/../layouts/header.php';
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h3 class="font-bold text-gray-900 mb-4">QR Code PIX</h3>
                 <?php if ($transaction['qrcode_base64']): ?>
-                <div class="mb-4">
-                    <img src="<?= htmlspecialchars($transaction['qrcode_base64']) ?>" alt="QR Code" class="w-full">
+                <div class="mb-4 flex justify-center">
+                    <img src="data:image/png;base64,<?= htmlspecialchars($transaction['qrcode_base64']) ?>" alt="QR Code PIX" class="w-64 h-64 border-2 border-gray-200 rounded-lg">
                 </div>
                 <?php endif; ?>
                 <div>
