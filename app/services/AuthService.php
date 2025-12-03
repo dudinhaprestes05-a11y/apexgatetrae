@@ -73,18 +73,20 @@ class AuthService {
             errorResponse('Invalid credentials', 401);
         }
 
+        $hashedApiSecret = hash('sha256', $apiSecret);
+
         if (APP_ENV === 'development') {
             error_log('=== CREDENTIAL COMPARISON ===');
             error_log('Received API Key: ' . substr($apiKey, 0, 8) . '...');
             error_log('Received API Secret length: ' . strlen($apiSecret));
             error_log('Received API Secret first 4 chars: ' . substr($apiSecret, 0, 4));
-            error_log('Stored API Secret length: ' . strlen($seller['api_secret']));
-            error_log('Stored API Secret first 4 chars: ' . substr($seller['api_secret'], 0, 4));
-            error_log('Secrets match: ' . ($seller['api_secret'] === $apiSecret ? 'YES' : 'NO'));
-            error_log('Secrets match (trimmed): ' . (trim($seller['api_secret']) === trim($apiSecret) ? 'YES' : 'NO'));
+            error_log('Hashed received secret first 4 chars: ' . substr($hashedApiSecret, 0, 4));
+            error_log('Stored API Secret (hash) length: ' . strlen($seller['api_secret']));
+            error_log('Stored API Secret (hash) first 4 chars: ' . substr($seller['api_secret'], 0, 4));
+            error_log('Secrets match: ' . ($seller['api_secret'] === $hashedApiSecret ? 'YES' : 'NO'));
         }
 
-        if (trim($seller['api_secret']) !== trim($apiSecret)) {
+        if (trim($seller['api_secret']) !== trim($hashedApiSecret)) {
             $this->logModel->warning('auth', 'Invalid API Secret in Basic Auth', [
                 'seller_id' => $seller['id'],
                 'ip' => getClientIp()
