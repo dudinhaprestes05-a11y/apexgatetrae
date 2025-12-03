@@ -1,42 +1,124 @@
-# Correção de Autenticação - Headers Case-Insensitive
+# Correção de Autenticação - Headers Authorization Bloqueados
 
 ## Problema Identificado
 
-A autenticação Basic Auth estava falhando com erro 401 "Authentication is required" mesmo quando o header `Authorization` era enviado corretamente.
+A autenticação estava falhando com erro 401 "Authentication is required" mesmo quando credenciais válidas eram enviadas.
 
-**Causa:** A função `getallheaders()` retorna headers com capitalização diferente dependendo do servidor web:
-- **Apache**: Headers com primeira letra maiúscula (ex: "Authorization")
-- **Nginx/PHP-FPM**: Headers podem vir em lowercase (ex: "authorization")
-- **FastCGI**: Headers vêm através de `$_SERVER` com prefixo `HTTP_`
+**Causa Raiz:** O header `Authorization` não estava chegando ao PHP devido à configuração do servidor web (Nginx/FastCGI). O servidor estava bloqueando/removendo o header antes de passar para o PHP.
 
-## Solução Implementada
+### Evidência do Problema
 
-### 1. Nova Função Helper (`helpers.php`)
+Os logs mostraram que apenas estes headers chegavam ao PHP:
+- Cookie, Accept-Encoding, Postman-Token, Cache-Control, Accept
+- User-Agent, Content-Type, Content-Length, Connection
+- X-Accel-Internal, X-Real-Ip, Host
 
-Foi criada a função `getAllHeadersCaseInsensitive()` que:
-- Normaliza todos os headers para formato consistente (Ucwords)
-- Funciona em qualquer servidor (Apache, Nginx, PHP-FPM)
-- Faz fallback automático para `$_SERVER` quando necessário
-- Garante que "Authorization", "X-Api-Key", "X-Signature" sejam encontrados independente da capitalização
+O header `Authorization` estava completamente ausente.
 
-### 2. Atualização do AuthService
+## Soluções Implementadas
 
-O `AuthService.php` foi atualizado para:
-- Usar `getAllHeadersCaseInsensitive()` ao invés de `getallheaders()`
-- Buscar headers normalizados: "Authorization", "X-Api-Key", "X-Signature"
-- Adicionar logs de debug em ambiente de desenvolvimento
-- Usar regex case-insensitive (`/i`) para "Basic" e "Bearer"
+### 1. Múltiplos Métodos de Autenticação
 
-### 3. Atualização do WebhookController
+Agora o sistema aceita credenciais através de **4 métodos diferentes**:
 
-O `WebhookController.php` também foi atualizado para usar a mesma função nos webhooks de adquirentes.
+#### Método 1: Authorization Header (Ideal)
+```bash
+# Basic Auth
+Authorization: Basic base64(api_key:api_secret)
+
+# Bearer Token
+Authorization: Bearer api_key
+```
+
+#### Método 2: X-API-Key Headers (Recomendado para Nginx)
+```bash
+# Apenas API Key
+X-API-Key: sua_api_key
+
+# Com API Secret (autenticação completa)
+X-API-Key: sua_api_key
+X-API-Secret: seu_api_secret
+```
+
+#### Método 3: Query Parameters (Alternativa)
+```bash
+# Apenas API Key
+?api_key=sua_api_key
+
+# Com API Secret
+?api_key=sua_api_key&api_secret=seu_api_secret
+```
+
+#### Método 4: X-API-Key + HMAC Signature
+```bash
+X-API-Key: sua_api_key
+X-Signature: hmac_sha256_signature
+```
+
+### 2. Função Helper Melhorada (`helpers.php:244-283`)
+
+A função `getAllHeadersCaseInsensitive()` agora:
+- Normaliza capitalização de todos os headers
+- Verifica múltiplas variáveis de ambiente: `HTTP_AUTHORIZATION`, `REDIRECT_HTTP_AUTHORIZATION`
+- Funciona em Apache, Nginx, PHP-FPM, FastCGI
+- Faz fallback automático para `$_SERVER`
+
+### 3. AuthService Atualizado (`AuthService.php:87-146`)
+
+O `AuthService` agora:
+- Aceita credenciais via Authorization, X-API-Key, X-API-Secret, ou query params
+- Detecta automaticamente o método de autenticação usado
+- Adiciona logs detalhados em desenvolvimento
+- Prioriza métodos mais seguros (headers sobre query params)
+
+### 4. Configuração Apache (.htaccess:3-4)
+
+Adicionadas regras para passar o Authorization header:
+```apache
+RewriteCond %{HTTP:Authorization} ^(.+)$
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+```
+
+### 5. Logs de Debug Melhorados
+
+Em modo desenvolvimento (`APP_ENV=development`):
+- Lista todos os headers disponíveis
+- Mostra todas as chaves `$_SERVER`
+- Indica se Authorization está presente
+- Registra tentativas de autenticação
 
 ## Como Testar
 
-### Teste 1: Basic Auth
+### Teste 1: X-API-Key + X-API-Secret (RECOMENDADO)
 
 ```bash
-curl -X POST http://seu-dominio.com/api/pix/create \
+curl -X POST https://seu-dominio.com/api/pix/create \
+  -H "X-API-Key: sua_api_key" \
+  -H "X-API-Secret: seu_api_secret" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 100.00,
+    "payer_name": "João Silva",
+    "payer_document": "12345678901"
+  }'
+```
+
+### Teste 2: Query Parameters (Alternativa Simples)
+
+```bash
+curl -X POST "https://seu-dominio.com/api/pix/create?api_key=sua_api_key&api_secret=seu_api_secret" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 100.00,
+    "payer_name": "João Silva",
+    "payer_document": "12345678901"
+  }'
+```
+
+### Teste 3: Authorization Header (Se Servidor Configurado)
+
+```bash
+curl -X POST https://seu-dominio.com/api/pix/create \
   -H "Authorization: Basic $(echo -n 'sua_api_key:seu_api_secret' | base64)" \
   -H "Content-Type: application/json" \
   -d '{
@@ -46,62 +128,136 @@ curl -X POST http://seu-dominio.com/api/pix/create \
   }'
 ```
 
-### Teste 2: Bearer Token
+### Teste 4: X-API-Key + HMAC (Máxima Segurança)
 
 ```bash
-curl -X GET http://seu-dominio.com/api/pix/list \
-  -H "Authorization: Bearer sua_api_key" \
-  -H "Content-Type: application/json"
-```
-
-### Teste 3: X-API-Key Header
-
-```bash
-curl -X GET http://seu-dominio.com/api/pix/list \
-  -H "X-API-Key: sua_api_key" \
-  -H "Content-Type: application/json"
-```
-
-### Teste 4: X-API-Key + HMAC Signature
-
-```bash
-# Gerar signature HMAC
-PAYLOAD='{"amount":100.00}'
+PAYLOAD='{"amount":100.00,"payer_name":"João Silva","payer_document":"12345678901"}'
 SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "seu_api_secret" | cut -d' ' -f2)
 
-curl -X POST http://seu-dominio.com/api/pix/create \
+curl -X POST https://seu-dominio.com/api/pix/create \
   -H "X-API-Key: sua_api_key" \
   -H "X-Signature: $SIGNATURE" \
   -H "Content-Type: application/json" \
   -d "$PAYLOAD"
 ```
 
-## Debug em Desenvolvimento
+## Configuração do Servidor
 
-Com `APP_ENV=development` no arquivo `.env`, o sistema agora loga informações úteis:
+### Para Nginx + PHP-FPM
 
-- Headers disponíveis quando autenticação falhar
-- Presença do header Authorization
-- Chaves dos headers recebidos (error_log)
+Adicione no seu arquivo de configuração do site:
+
+```nginx
+location ~ \.php$ {
+    fastcgi_pass unix:/var/run/php/php-fpm.sock;
+    fastcgi_index index.php;
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    include fastcgi_params;
+
+    # IMPORTANTE: Passar Authorization header
+    fastcgi_param HTTP_AUTHORIZATION $http_authorization;
+    fastcgi_param REDIRECT_HTTP_AUTHORIZATION $http_authorization;
+}
+```
+
+Ou use headers:
+
+```nginx
+location / {
+    proxy_set_header Authorization $http_authorization;
+    # ... outras configurações
+}
+```
+
+Depois reinicie o Nginx:
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+### Para Apache
+
+O arquivo `.htaccess` já está configurado. Certifique-se de que `mod_rewrite` está ativo:
+
+```bash
+sudo a2enmod rewrite
+sudo systemctl restart apache2
+```
+
+## Ordem de Prioridade
+
+O sistema verifica credenciais nesta ordem:
+
+1. **Authorization Header** (Basic ou Bearer)
+2. **X-API-Key Header** (com ou sem X-API-Secret)
+3. **Query Parameters** (?api_key=... ou ?api_key=...&api_secret=...)
+
+## Segurança
+
+### Recomendações
+
+✅ **Use X-API-Key headers** - Funcionam em qualquer servidor
+✅ **Adicione HMAC signature** - Para máxima segurança
+✅ **Use HTTPS sempre** - Essencial para proteger credenciais
+✅ **Evite query params em produção** - Credenciais ficam em logs
+
+### Notas Importantes
+
+⚠️ Query parameters são menos seguros porque:
+- Aparecem em logs do servidor
+- Aparecem no histórico do navegador
+- Podem ser compartilhados acidentalmente em URLs
+
+Use query params apenas para testes ou quando headers não funcionam.
 
 ## Resultados Esperados
 
-✅ **Antes**: Erro 401 mesmo com headers corretos
-✅ **Depois**: Autenticação funciona independente da capitalização dos headers
-✅ **Compatibilidade**: Apache, Nginx, PHP-FPM, FastCGI
+✅ Autenticação funciona via X-API-Key headers
+✅ Autenticação funciona via query parameters
+✅ Autenticação funciona via Authorization (se servidor configurado)
+✅ Logs detalhados para debug
+✅ Compatibilidade total com Nginx/Apache/FastCGI
 
 ## Arquivos Modificados
 
-1. `app/config/helpers.php` - Nova função `getAllHeadersCaseInsensitive()`
-2. `app/services/AuthService.php` - Usa nova função + logs de debug
-3. `app/controllers/api/WebhookController.php` - Usa nova função
+1. `.htaccess` - Regras para Apache passar Authorization
+2. `app/config/helpers.php` - Função melhorada `getAllHeadersCaseInsensitive()`
+3. `app/services/AuthService.php` - Múltiplos métodos de autenticação + logs
+4. `app/controllers/api/WebhookController.php` - Usa função case-insensitive
 
-## Notas Técnicas
+## Troubleshooting
 
-A função normaliza headers da seguinte forma:
-- `authorization` → `Authorization`
-- `x-api-key` → `X-Api-Key`
-- `x-signature` → `X-Signature`
-- `content-type` → `Content-Type`
+### Se ainda não funcionar
 
-Isso garante consistência em todos os ambientes.
+1. **Verifique os logs:**
+```bash
+tail -f /var/log/nginx/error.log
+tail -f /var/log/php-fpm/error.log
+```
+
+2. **Teste com X-API-Key primeiro:**
+```bash
+curl -v -H "X-API-Key: sua_chave" https://seu-dominio.com/api/pix/list
+```
+
+3. **Ative modo debug** no `.env`:
+```
+APP_ENV=development
+```
+
+4. **Verifique se seller está ativo:**
+```sql
+SELECT id, email, status FROM sellers WHERE api_key = 'sua_api_key';
+```
+
+### Logs de Debug
+
+Os logs mostrarão:
+- `available_headers`: Todos os headers recebidos
+- `has_authorization`: Se Authorization está presente
+- `Auth headers received`: Lista de headers
+- `$_SERVER keys`: Todas as variáveis de servidor
+
+## Próximos Passos
+
+Se X-API-Key headers funcionarem mas Authorization não, isso significa que você precisa configurar o Nginx. Use a configuração acima na seção "Para Nginx + PHP-FPM".

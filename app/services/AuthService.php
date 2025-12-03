@@ -108,11 +108,38 @@ class AuthService {
         }
 
         if (isset($headers['X-Api-Key'])) {
-            return ['api_key' => $headers['X-Api-Key']];
+            $apiKey = $headers['X-Api-Key'];
+            $apiSecret = $headers['X-Api-Secret'] ?? null;
+
+            if ($apiSecret) {
+                return [
+                    'type' => 'basic',
+                    'api_key' => $apiKey,
+                    'api_secret' => $apiSecret
+                ];
+            }
+
+            return ['api_key' => $apiKey];
+        }
+
+        if (isset($_GET['api_key'])) {
+            $apiKey = $_GET['api_key'];
+            $apiSecret = $_GET['api_secret'] ?? null;
+
+            if ($apiSecret) {
+                return [
+                    'type' => 'basic',
+                    'api_key' => $apiKey,
+                    'api_secret' => $apiSecret
+                ];
+            }
+
+            return ['api_key' => $apiKey];
         }
 
         if (APP_ENV === 'development') {
             error_log('Auth headers received: ' . json_encode(array_keys($headers)));
+            error_log('$_SERVER keys: ' . json_encode(array_keys($_SERVER)));
         }
 
         return null;

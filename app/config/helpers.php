@@ -250,6 +250,13 @@ function getAllHeadersCaseInsensitive() {
             foreach ($rawHeaders as $key => $value) {
                 $headers[ucwords(strtolower($key), '-')] = $value;
             }
+            if (!isset($headers['Authorization'])) {
+                if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+                    $headers['Authorization'] = $_SERVER['HTTP_AUTHORIZATION'];
+                } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+                    $headers['Authorization'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+                }
+            }
             return $headers;
         }
     }
@@ -261,6 +268,14 @@ function getAllHeadersCaseInsensitive() {
         } elseif (in_array($key, ['CONTENT_TYPE', 'CONTENT_LENGTH'])) {
             $headerKey = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', $key))));
             $headers[$headerKey] = $value;
+        }
+    }
+
+    if (!isset($headers['Authorization'])) {
+        if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            $headers['Authorization'] = $_SERVER['HTTP_AUTHORIZATION'];
+        } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+            $headers['Authorization'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
         }
     }
 
