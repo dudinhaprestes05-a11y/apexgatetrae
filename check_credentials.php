@@ -1,89 +1,84 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+header('Content-Type: text/plain');
 
-require_once __DIR__ . '/app/config/database.php';
+echo "DEBUG - Iniciando...\n\n";
 
-echo "=== DIAGNÓSTICO DE CREDENCIAIS ===\n\n";
-
-$db = db();
-
-// Buscar todos os sellers ativos
-$stmt = $db->query("SELECT id, name, email, api_key, api_secret, status FROM sellers WHERE status = 'active' ORDER BY id");
-$sellers = $stmt->fetchAll();
-
-if (empty($sellers)) {
-    echo "❌ Nenhum seller ativo encontrado!\n";
-    exit;
-}
-
-echo "Sellers ativos encontrados: " . count($sellers) . "\n\n";
-
-foreach ($sellers as $seller) {
-    echo "========================================\n";
-    echo "Seller ID: {$seller['id']}\n";
-    echo "Nome: {$seller['name']}\n";
-    echo "Email: {$seller['email']}\n";
-    echo "Status: {$seller['status']}\n\n";
-
-    echo "API Key: {$seller['api_key']}\n";
-    echo "API Secret (hash no banco): {$seller['api_secret']}\n";
-    echo "Tamanho do hash: " . strlen($seller['api_secret']) . " caracteres\n\n";
-
-    // Verificar se começa com sk_live
-    if (strpos($seller['api_key'], 'sk_live_') === 0) {
-        echo "⚠️  ATENÇÃO: Este é um seller de PRODUÇÃO (sk_live_)\n\n";
-
-        // O hash atual no banco
-        $currentHash = $seller['api_secret'];
-
-        echo "⚠️  PROBLEMA IDENTIFICADO:\n";
-        echo "   O cliente está enviando: $currentHash (64 chars - é um HASH)\n";
-        echo "   O sistema espera: O SECRET EM TEXTO PLANO (não o hash)\n\n";
-
-        echo "📋 SOLUÇÃO:\n";
-        echo "   Você precisa fornecer ao cliente o SECRET ORIGINAL em texto plano,\n";
-        echo "   NÃO o hash que está no banco.\n\n";
-
-        echo "   Se você não tem o secret original, você precisa:\n";
-        echo "   1. Gerar um novo secret\n";
-        echo "   2. Fazer o hash dele\n";
-        echo "   3. Atualizar no banco\n";
-        echo "   4. Enviar o secret ORIGINAL (não o hash) para o cliente\n\n";
-
-        // Gerar um novo secret como exemplo
-        $newSecret = 'live_secret_' . bin2hex(random_bytes(20));
-        $newHash = hash('sha256', $newSecret);
-
-        echo "💡 EXEMPLO DE NOVO SECRET:\n";
-        echo "   Secret (enviar para o cliente): $newSecret\n";
-        echo "   Hash (guardar no banco): $newHash\n\n";
-
-        echo "🔧 Para atualizar este seller com novo secret:\n";
-        echo "   UPDATE sellers SET api_secret = '$newHash' WHERE id = {$seller['id']};\n\n";
-
-        echo "📝 Credenciais para enviar ao cliente:\n";
-        echo "   API Key:    {$seller['api_key']}\n";
-        echo "   API Secret: $newSecret\n\n";
-
-        echo "✅ Comando curl de teste:\n";
-        $basicAuth = base64_encode("{$seller['api_key']}:$newSecret");
-        echo "curl -X GET 'http://localhost:8000/api/pix/list' \\\n";
-        echo "  -H 'Authorization: Basic $basicAuth'\n\n";
-
-        echo "ou com headers separados:\n";
-        echo "curl -X GET 'http://localhost:8000/api/pix/list' \\\n";
-        echo "  -H 'X-API-Key: {$seller['api_key']}' \\\n";
-        echo "  -H 'X-API-Secret: $newSecret'\n\n";
-    } else {
-        echo "ℹ️  Este é um seller de teste/demo\n\n";
+try {
+    // Carrega .env
+    if (file_exists(__DIR__ . '/.env')) {
+        $lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach ($lines as $line) {
+            if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
+                list($key, $value) = explode('=', $line, 2);
+                $_ENV[trim($key)] = trim($value);
+            }
+        }
+        echo "✅ .env carregado\n";
     }
 
-    echo "========================================\n\n";
+    $host = $_ENV['DB_HOST'] ?? 'localhost';
+    $dbname = $_ENV['DB_NAME'] ?? '';
+    $user = $_ENV['DB_USER'] ?? 'root';
+    $pass = $_ENV['DB_PASS'] ?? '';
+
+    echo "Conectando em: {$host}/{$dbname}\n\n";
+
+    $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
+    $pdo = new PDO($dsn, $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+
+    echo "✅ Conectado ao banco\n\n";
+
+    $stmt = $pdo->query("SELECT id, name, email, api_key, api_secret FROM sellers ORDER BY id");
+    $sellers = $stmt->fetchAll();
+
+    echo "Total de sellers: " . count($sellers) . "\n\n";
+
+    foreach ($sellers as $s) {
+        echo "===========================================\n";
+        echo "ID: {$s['id']}\n";
+        echo "Nome: {$s['name']}\n";
+        echo "Email: {$s['email']}\n";
+        echo "API Key: {$s['api_key']}\n";
+        echo "API Secret: {$s['api_secret']}\n";
+        echo "Secret Length: " . strlen($s['api_secret']) . "\n";
+        echo "Is Hex: " . (ctype_xdigit($s['api_secret']) ? 'YES' : 'NO') . "\n";
+        echo "Is SHA256: " . (strlen($s['api_secret']) === 64 && ctype_xdigit($s['api_secret']) ? 'YES' : 'NO') . "\n";
+        echo "\n";
+    }
+
+    // Teste com GET params
+    if (isset($_GET['test_seller']) && isset($_GET['test_secret'])) {
+        echo "===========================================\n";
+        echo "TESTE DE AUTENTICAÇÃO\n";
+        echo "===========================================\n\n";
+
+        $id = $_GET['test_seller'];
+        $secret = $_GET['test_secret'];
+
+        $stmt = $pdo->prepare("SELECT * FROM sellers WHERE id = ?");
+        $stmt->execute([$id]);
+        $seller = $stmt->fetch();
+
+        if ($seller) {
+            $hash = hash('sha256', $secret);
+            
+            echo "Seller: {$seller['name']}\n";
+            echo "Secret enviado: {$secret}\n";
+            echo "Hash do enviado: {$hash}\n";
+            echo "Hash no banco: {$seller['api_secret']}\n";
+            echo "Batem? " . ($hash === $seller['api_secret'] ? '✅ SIM' : '❌ NÃO') . "\n";
+        } else {
+            echo "Seller não encontrado!\n";
+        }
+    }
+
+} catch (Exception $e) {
+    echo "ERRO: " . $e->getMessage() . "\n";
 }
 
-echo "=== RESUMO DO PROBLEMA ===\n";
-echo "O cliente está enviando o HASH ao invés do SECRET em texto plano.\n";
-echo "O sistema funciona assim:\n";
-echo "  1. Cliente envia: api_key + api_secret (TEXTO PLANO)\n";
-echo "  2. Sistema faz: hash('sha256', api_secret)\n";
-echo "  3. Sistema compara: hash gerado == hash do banco\n\n";
-echo "Se o cliente enviar o hash, o sistema vai fazer hash(hash) e não vai bater!\n\n";
+echo "\n⚠️ REMOVA ESTE ARQUIVO!\n";
