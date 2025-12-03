@@ -21,7 +21,147 @@ if (empty($uri)) {
 }
 
 try {
-    if (preg_match('#^/api/pix/create$#', $uri) && $method === 'POST') {
+    if ($uri === '/login' && $method === 'GET') {
+        require_once __DIR__ . '/app/controllers/web/AuthController.php';
+        $controller = new AuthController();
+        $controller->showLogin();
+    }
+    elseif ($uri === '/login' && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/AuthController.php';
+        $controller = new AuthController();
+        $controller->login();
+    }
+    elseif ($uri === '/register' && $method === 'GET') {
+        require_once __DIR__ . '/app/controllers/web/AuthController.php';
+        $controller = new AuthController();
+        $controller->showRegister();
+    }
+    elseif ($uri === '/register' && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/AuthController.php';
+        $controller = new AuthController();
+        $controller->register();
+    }
+    elseif ($uri === '/logout') {
+        require_once __DIR__ . '/app/controllers/web/AuthController.php';
+        $controller = new AuthController();
+        $controller->logout();
+    }
+    elseif ($uri === '/seller/dashboard') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->dashboard();
+    }
+    elseif ($uri === '/seller/documents') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->documents();
+    }
+    elseif ($uri === '/seller/documents/upload' && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->uploadDocument();
+    }
+    elseif ($uri === '/seller/profile') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->profile();
+    }
+    elseif ($uri === '/seller/profile/update' && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->updateProfile();
+    }
+    elseif ($uri === '/seller/transactions') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->transactions();
+    }
+    elseif (preg_match('#^/seller/transactions/(\d+)/(cashin|cashout)$#', $uri, $matches)) {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->transactionDetails($matches[1], $matches[2]);
+    }
+    elseif ($uri === '/seller/api-credentials') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->apiCredentials();
+    }
+    elseif ($uri === '/seller/api-credentials/regenerate' && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->regenerateApiKey();
+    }
+    elseif ($uri === '/seller/notifications') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->notifications();
+    }
+    elseif (preg_match('#^/seller/notifications/(\d+)/read$#', $uri, $matches) && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->markNotificationAsRead($matches[1]);
+    }
+    elseif ($uri === '/admin/dashboard') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->dashboard();
+    }
+    elseif ($uri === '/admin/sellers') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->sellers();
+    }
+    elseif (preg_match('#^/admin/sellers/view/(\d+)$#', $uri, $matches)) {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->sellerDetails($matches[1]);
+    }
+    elseif (preg_match('#^/admin/sellers/(\d+)/approve$#', $uri, $matches) && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->approveSeller($matches[1]);
+    }
+    elseif (preg_match('#^/admin/sellers/(\d+)/reject$#', $uri, $matches) && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->rejectSeller($matches[1]);
+    }
+    elseif ($uri === '/admin/documents') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->documents();
+    }
+    elseif (preg_match('#^/admin/documents/view/(\d+)$#', $uri, $matches)) {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->viewDocument($matches[1]);
+    }
+    elseif (preg_match('#^/admin/documents/(\d+)/approve$#', $uri, $matches) && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->approveDocument($matches[1]);
+    }
+    elseif (preg_match('#^/admin/documents/(\d+)/reject$#', $uri, $matches) && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->rejectDocument($matches[1]);
+    }
+    elseif ($uri === '/admin/transactions') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->transactions();
+    }
+    elseif ($uri === '/admin/acquirers') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->acquirers();
+    }
+    elseif ($uri === '/admin/logs') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->logs();
+    }
+    elseif (preg_match('#^/api/pix/create$#', $uri) && $method === 'POST') {
         require_once __DIR__ . '/app/controllers/api/PixController.php';
         $controller = new PixController();
         $controller->create();
@@ -57,19 +197,12 @@ try {
         $controller->receiveFromAcquirer();
     }
     elseif ($uri === '/' || $uri === '') {
-        echo json_encode([
-            'app' => APP_NAME,
-            'version' => APP_VERSION,
-            'status' => 'online',
-            'timestamp' => date('c')
-        ]);
+        header('Location: /login');
+        exit;
     }
     else {
         http_response_code(404);
-        echo json_encode([
-            'error' => 'Endpoint not found',
-            'path' => $uri
-        ]);
+        echo "Página não encontrada";
     }
 
 } catch (Exception $e) {
