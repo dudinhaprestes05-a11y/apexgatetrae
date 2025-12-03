@@ -21,7 +21,7 @@ abstract class BaseModel {
         return $stmt->fetch();
     }
 
-    public function all($orderBy = null, $limit = null) {
+    public function all($orderBy = null, $limit = null, $offset = null) {
         $sql = "SELECT * FROM {$this->table}";
 
         if ($orderBy) {
@@ -32,11 +32,15 @@ abstract class BaseModel {
             $sql .= " LIMIT {$limit}";
         }
 
+        if ($offset) {
+            $sql .= " OFFSET {$offset}";
+        }
+
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
     }
 
-    public function where($conditions, $orderBy = null, $limit = null) {
+    public function where($conditions, $orderBy = null, $limit = null, $offset = null) {
         $whereClauses = [];
         $params = [];
 
@@ -53,6 +57,10 @@ abstract class BaseModel {
 
         if ($limit) {
             $sql .= " LIMIT {$limit}";
+        }
+
+        if ($offset) {
+            $sql .= " OFFSET {$offset}";
         }
 
         $stmt = $this->db->prepare($sql);

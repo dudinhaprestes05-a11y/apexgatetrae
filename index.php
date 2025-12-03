@@ -156,6 +156,36 @@ try {
         $controller = new AdminController();
         $controller->acquirers();
     }
+    elseif (preg_match('#^/admin/acquirers/get/(\d+)$#', $uri, $matches)) {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->getAcquirer($matches[1]);
+    }
+    elseif ($uri === '/admin/acquirers/create' && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->createAcquirer();
+    }
+    elseif (preg_match('#^/admin/acquirers/update/(\d+)$#', $uri, $matches) && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->updateAcquirer($matches[1]);
+    }
+    elseif (preg_match('#^/admin/acquirers/toggle/(\d+)$#', $uri, $matches) && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->toggleAcquirerStatus($matches[1]);
+    }
+    elseif (preg_match('#^/admin/acquirers/reset-limit/(\d+)$#', $uri, $matches) && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->resetAcquirerLimit($matches[1]);
+    }
+    elseif (preg_match('#^/admin/acquirers/delete/(\d+)$#', $uri, $matches) && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->deleteAcquirer($matches[1]);
+    }
     elseif ($uri === '/admin/logs') {
         require_once __DIR__ . '/app/controllers/web/AdminController.php';
         $controller = new AdminController();

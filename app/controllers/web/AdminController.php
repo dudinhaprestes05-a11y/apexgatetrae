@@ -290,6 +290,267 @@ class AdminController {
         require __DIR__ . '/../../views/admin/acquirers.php';
     }
 
+    public function getAcquirer($acquirerId) {
+        header('Content-Type: application/json');
+
+        $acquirer = $this->acquirerModel->find($acquirerId);
+
+        if (!$acquirer) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Adquirente não encontrada']);
+            exit;
+        }
+
+        echo json_encode(['success' => true, 'acquirer' => $acquirer]);
+        exit;
+    }
+
+    public function createAcquirer() {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Método não permitido']);
+            exit;
+        }
+
+        $name = trim($_POST['name'] ?? '');
+        $code = strtolower(trim($_POST['code'] ?? ''));
+        $apiUrl = trim($_POST['api_url'] ?? '');
+        $apiKey = trim($_POST['api_key'] ?? '');
+        $apiSecret = trim($_POST['api_secret'] ?? '');
+        $priorityOrder = intval($_POST['priority_order'] ?? 1);
+        $status = $_POST['status'] ?? 'active';
+        $dailyLimit = floatval($_POST['daily_limit'] ?? 100000.00);
+
+        if (empty($name) || empty($code) || empty($apiUrl)) {
+            echo json_encode(['success' => false, 'error' => 'Nome, código e URL são obrigatórios']);
+            exit;
+        }
+
+        if (!preg_match('/^[a-z0-9_-]+$/', $code)) {
+            echo json_encode(['success' => false, 'error' => 'Código deve conter apenas letras minúsculas, números, hífen e underscore']);
+            exit;
+        }
+
+        if (!filter_var($apiUrl, FILTER_VALIDATE_URL)) {
+            echo json_encode(['success' => false, 'error' => 'URL da API inválida']);
+            exit;
+        }
+
+        $existing = $this->acquirerModel->findByCode($code);
+        if ($existing) {
+            echo json_encode(['success' => false, 'error' => 'Código já existe']);
+            exit;
+        }
+
+        $data = [
+            'name' => $name,
+            'code' => $code,
+            'api_url' => $apiUrl,
+            'api_key' => $apiKey ?: null,
+            'api_secret' => $apiSecret ?: null,
+            'priority_order' => $priorityOrder,
+            'status' => $status,
+            'daily_limit' => $dailyLimit,
+            'daily_used' => 0,
+            'daily_reset_at' => date('Y-m-d'),
+            'success_rate' => 100.00,
+            'avg_response_time' => 0
+        ];
+
+        $acquirerId = $this->acquirerModel->create($data);
+
+        $this->logModel->info('admin', 'Adquirente criada', [
+            'acquirer_id' => $acquirerId,
+            'code' => $code,
+            'admin_id' => $_SESSION['user_id']
+        ]);
+
+        echo json_encode(['success' => true, 'message' => 'Adquirente criada com sucesso!', 'id' => $acquirerId]);
+        exit;
+    }
+
+    public function updateAcquirer($acquirerId) {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Método não permitido']);
+            exit;
+        }
+
+        $acquirer = $this->acquirerModel->find($acquirerId);
+        if (!$acquirer) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Adquirente não encontrada']);
+            exit;
+        }
+
+        $name = trim($_POST['name'] ?? '');
+        $code = strtolower(trim($_POST['code'] ?? ''));
+        $apiUrl = trim($_POST['api_url'] ?? '');
+        $apiKey = trim($_POST['api_key'] ?? '');
+        $apiSecret = trim($_POST['api_secret'] ?? '');
+        $priorityOrder = intval($_POST['priority_order'] ?? 1);
+        $status = $_POST['status'] ?? 'active';
+        $dailyLimit = floatval($_POST['daily_limit'] ?? 100000.00);
+
+        if (empty($name) || empty($code) || empty($apiUrl)) {
+            echo json_encode(['success' => false, 'error' => 'Nome, código e URL são obrigatórios']);
+            exit;
+        }
+
+        if (!preg_match('/^[a-z0-9_-]+$/', $code)) {
+            echo json_encode(['success' => false, 'error' => 'Código deve conter apenas letras minúsculas, números, hífen e underscore']);
+            exit;
+        }
+
+        if (!filter_var($apiUrl, FILTER_VALIDATE_URL)) {
+            echo json_encode(['success' => false, 'error' => 'URL da API inválida']);
+            exit;
+        }
+
+        if ($code !== $acquirer['code']) {
+            $existing = $this->acquirerModel->findByCode($code);
+            if ($existing) {
+                echo json_encode(['success' => false, 'error' => 'Código já existe']);
+                exit;
+            }
+        }
+
+        $data = [
+            'name' => $name,
+            'code' => $code,
+            'api_url' => $apiUrl,
+            'priority_order' => $priorityOrder,
+            'status' => $status,
+            'daily_limit' => $dailyLimit
+        ];
+
+        if (!empty($apiKey)) {
+            $data['api_key'] = $apiKey;
+        }
+
+        if (!empty($apiSecret)) {
+            $data['api_secret'] = $apiSecret;
+        }
+
+        $this->acquirerModel->update($acquirerId, $data);
+
+        $this->logModel->info('admin', 'Adquirente atualizada', [
+            'acquirer_id' => $acquirerId,
+            'code' => $code,
+            'admin_id' => $_SESSION['user_id']
+        ]);
+
+        echo json_encode(['success' => true, 'message' => 'Adquirente atualizada com sucesso!']);
+        exit;
+    }
+
+    public function toggleAcquirerStatus($acquirerId) {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Método não permitido']);
+            exit;
+        }
+
+        $acquirer = $this->acquirerModel->find($acquirerId);
+        if (!$acquirer) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Adquirente não encontrada']);
+            exit;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $newStatus = $input['status'] ?? '';
+
+        if (!in_array($newStatus, ['active', 'inactive', 'maintenance'])) {
+            echo json_encode(['success' => false, 'error' => 'Status inválido']);
+            exit;
+        }
+
+        $this->acquirerModel->update($acquirerId, ['status' => $newStatus]);
+
+        $this->logModel->info('admin', 'Status da adquirente alterado', [
+            'acquirer_id' => $acquirerId,
+            'old_status' => $acquirer['status'],
+            'new_status' => $newStatus,
+            'admin_id' => $_SESSION['user_id']
+        ]);
+
+        echo json_encode(['success' => true, 'message' => 'Status alterado com sucesso!']);
+        exit;
+    }
+
+    public function resetAcquirerLimit($acquirerId) {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Método não permitido']);
+            exit;
+        }
+
+        $acquirer = $this->acquirerModel->find($acquirerId);
+        if (!$acquirer) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Adquirente não encontrada']);
+            exit;
+        }
+
+        $this->acquirerModel->update($acquirerId, [
+            'daily_used' => 0,
+            'daily_reset_at' => date('Y-m-d')
+        ]);
+
+        $this->logModel->info('admin', 'Limite diário da adquirente resetado', [
+            'acquirer_id' => $acquirerId,
+            'admin_id' => $_SESSION['user_id']
+        ]);
+
+        echo json_encode(['success' => true, 'message' => 'Limite diário resetado!']);
+        exit;
+    }
+
+    public function deleteAcquirer($acquirerId) {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Método não permitido']);
+            exit;
+        }
+
+        $acquirer = $this->acquirerModel->find($acquirerId);
+        if (!$acquirer) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Adquirente não encontrada']);
+            exit;
+        }
+
+        $activeCashin = $this->cashinModel->count(['acquirer_id' => $acquirerId, 'status' => 'pending']);
+        $activeCashout = $this->cashoutModel->count(['acquirer_id' => $acquirerId, 'status' => 'pending']);
+
+        if ($activeCashin > 0 || $activeCashout > 0) {
+            echo json_encode(['success' => false, 'error' => 'Não é possível excluir adquirente com transações pendentes']);
+            exit;
+        }
+
+        $this->acquirerModel->delete($acquirerId);
+
+        $this->logModel->warning('admin', 'Adquirente excluída', [
+            'acquirer_id' => $acquirerId,
+            'code' => $acquirer['code'],
+            'admin_id' => $_SESSION['user_id']
+        ]);
+
+        echo json_encode(['success' => true, 'message' => 'Adquirente excluída com sucesso!']);
+        exit;
+    }
+
     public function logs() {
         $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
         $perPage = 50;
