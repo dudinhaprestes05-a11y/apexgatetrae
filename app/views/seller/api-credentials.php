@@ -3,9 +3,7 @@ $pageTitle = 'Credenciais da API';
 require_once __DIR__ . '/../layouts/header.php';
 
 $newApiSecret = $_SESSION['new_api_secret'] ?? null;
-$newApiKey = $_SESSION['new_api_key'] ?? null;
 unset($_SESSION['new_api_secret']);
-unset($_SESSION['new_api_key']);
 ?>
 
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -67,13 +65,13 @@ unset($_SESSION['new_api_key']);
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">Regenerar Credenciais</h2>
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Regenerar API Secret</h2>
         <p class="text-gray-600 text-sm mb-4">
-            Se suas credenciais foram comprometidas, você pode gerar novas. Isso invalidará as credenciais antigas imediatamente.
+            Se seu API Secret foi comprometido, você pode gerar um novo. O API Key permanecerá o mesmo, mas o secret antigo será invalidado imediatamente.
         </p>
-        <form method="POST" action="/seller/api-credentials/regenerate" onsubmit="return confirm('Tem certeza? As credenciais antigas serão invalidadas!')">
+        <form method="POST" action="/seller/api-credentials/regenerate" onsubmit="return confirm('Tem certeza? O API Secret antigo será invalidado!')">
             <button type="submit" class="bg-red-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-700 transition">
-                <i class="fas fa-sync-alt mr-2"></i>Regenerar Credenciais
+                <i class="fas fa-sync-alt mr-2"></i>Regenerar API Secret
             </button>
         </form>
     </div>

@@ -179,18 +179,15 @@ class SellerController {
             exit;
         }
 
-        $newApiKey = 'sk_live_' . bin2hex(random_bytes(32));
         $newApiSecret = bin2hex(random_bytes(32));
         $hashedSecret = hash('sha256', $newApiSecret);
 
         $this->sellerModel->update($this->sellerId, [
-            'api_key' => $newApiKey,
             'api_secret' => $hashedSecret
         ]);
 
         $_SESSION['new_api_secret'] = $newApiSecret;
-        $_SESSION['new_api_key'] = $newApiKey;
-        $_SESSION['success'] = 'Novas credenciais geradas com sucesso! Anote o API Secret, ele não será mostrado novamente.';
+        $_SESSION['success'] = 'Novo API Secret gerado com sucesso! Anote o secret, ele não será mostrado novamente.';
 
         header('Location: /seller/api-credentials');
         exit;
