@@ -41,6 +41,9 @@ $user = CheckAuth::user();
                         <a href="/admin/dashboard" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg text-sm font-medium transition">Dashboard</a>
                         <a href="/admin/sellers" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg text-sm font-medium transition">Sellers</a>
                         <a href="/admin/transactions" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg text-sm font-medium transition">Transações</a>
+                        <a href="/admin/acquirers" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg text-sm font-medium transition">Adquirentes</a>
+                        <a href="/admin/documents" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg text-sm font-medium transition">Documentos</a>
+                        <a href="/admin/logs" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg text-sm font-medium transition">Logs</a>
                     <?php else: ?>
                         <a href="/seller/dashboard" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg text-sm font-medium transition">Dashboard</a>
                         <a href="/seller/transactions" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg text-sm font-medium transition">Transações</a>
