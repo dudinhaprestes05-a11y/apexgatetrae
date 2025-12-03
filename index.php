@@ -221,6 +221,16 @@ try {
         $controller = new AdminController();
         $controller->logs();
     }
+    elseif ($uri === '/admin/settings') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->settings();
+    }
+    elseif ($uri === '/admin/settings/update' && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->updateSettings();
+    }
     elseif (preg_match('#^/api/pix/create$#', $uri) && $method === 'POST') {
         require_once __DIR__ . '/app/controllers/api/PixController.php';
         $controller = new PixController();

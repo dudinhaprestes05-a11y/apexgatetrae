@@ -2,17 +2,20 @@
 
 require_once __DIR__ . '/../../models/User.php';
 require_once __DIR__ . '/../../models/Seller.php';
+require_once __DIR__ . '/../../models/SystemSettings.php';
 require_once __DIR__ . '/../../services/NotificationService.php';
 require_once __DIR__ . '/../../middleware/CheckAuth.php';
 
 class AuthController {
     private $userModel;
     private $sellerModel;
+    private $settingsModel;
     private $notificationService;
 
     public function __construct() {
         $this->userModel = new User();
         $this->sellerModel = new Seller();
+        $this->settingsModel = new SystemSettings();
         $this->notificationService = new NotificationService();
     }
 
@@ -110,6 +113,9 @@ class AuthController {
         }
 
         try {
+            // Busca taxas padrão do sistema
+            $settings = $this->settingsModel->getSettings();
+
             $sellerId = $this->sellerModel->create([
                 'name' => $data['name'],
                 'email' => $data['email'],
@@ -121,7 +127,11 @@ class AuthController {
                 'monthly_revenue' => $data['monthly_revenue'] ?? null,
                 'average_ticket' => $data['average_ticket'] ?? null,
                 'status' => 'pending',
-                'document_status' => 'pending'
+                'document_status' => 'pending',
+                'fee_percentage_cashin' => $settings['default_fee_percentage_cashin'] ?? 0,
+                'fee_fixed_cashin' => $settings['default_fee_fixed_cashin'] ?? 0,
+                'fee_percentage_cashout' => $settings['default_fee_percentage_cashout'] ?? 0,
+                'fee_fixed_cashout' => $settings['default_fee_fixed_cashout'] ?? 0
             ]);
 
             $userId = $this->userModel->create([

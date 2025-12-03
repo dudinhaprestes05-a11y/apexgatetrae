@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../models/PixCashout.php';
 require_once __DIR__ . '/../../models/Acquirer.php';
 require_once __DIR__ . '/../../models/User.php';
 require_once __DIR__ . '/../../models/Log.php';
+require_once __DIR__ . '/../../models/SystemSettings.php';
 require_once __DIR__ . '/../../services/NotificationService.php';
 require_once __DIR__ . '/../../services/FileUploadService.php';
 
@@ -19,6 +20,7 @@ class AdminController {
     private $acquirerModel;
     private $userModel;
     private $logModel;
+    private $settingsModel;
     private $notificationService;
     private $fileUploadService;
 
@@ -32,8 +34,19 @@ class AdminController {
         $this->acquirerModel = new Acquirer();
         $this->userModel = new User();
         $this->logModel = new Log();
+        $this->settingsModel = new SystemSettings();
         $this->notificationService = new NotificationService();
         $this->fileUploadService = new FileUploadService();
+    }
+
+    private function parseDecimal($value) {
+        if (is_numeric($value)) {
+            return floatval($value);
+        }
+        // Substitui vírgula por ponto e remove outros caracteres
+        $value = str_replace(',', '.', $value);
+        $value = preg_replace('/[^0-9.]/', '', $value);
+        return floatval($value);
     }
 
     public function dashboard() {
@@ -592,23 +605,24 @@ class AdminController {
             exit;
         }
 
-        $feePercentageCashin = floatval($_POST['fee_percentage_cashin'] ?? 0);
-        $feeFixedCashin = floatval($_POST['fee_fixed_cashin'] ?? 0);
-        $feePercentageCashout = floatval($_POST['fee_percentage_cashout'] ?? 0);
-        $feeFixedCashout = floatval($_POST['fee_fixed_cashout'] ?? 0);
+        // Converte valores com vírgula para decimal
+        $feePercentageCashin = $this->parseDecimal($_POST['fee_percentage_cashin'] ?? 0) / 100;
+        $feeFixedCashin = $this->parseDecimal($_POST['fee_fixed_cashin'] ?? 0);
+        $feePercentageCashout = $this->parseDecimal($_POST['fee_percentage_cashout'] ?? 0) / 100;
+        $feeFixedCashout = $this->parseDecimal($_POST['fee_fixed_cashout'] ?? 0);
 
         $balanceRetention = isset($_POST['balance_retention']) ? 1 : 0;
-        $revenueRetentionPercentage = floatval($_POST['revenue_retention_percentage'] ?? 0);
+        $revenueRetentionPercentage = $this->parseDecimal($_POST['revenue_retention_percentage'] ?? 0);
         $retentionReason = $_POST['retention_reason'] ?? '';
 
-        if ($feePercentageCashin < 0 || $feePercentageCashin > 15) {
-            $_SESSION['error'] = 'Taxa percentual de cash-in deve estar entre 0% e 15%';
+        if ($feePercentageCashin < 0) {
+            $_SESSION['error'] = 'Taxa percentual de cash-in não pode ser negativa';
             header('Location: /admin/sellers/view/' . $sellerId);
             exit;
         }
 
-        if ($feePercentageCashout < 0 || $feePercentageCashout > 15) {
-            $_SESSION['error'] = 'Taxa percentual de cash-out deve estar entre 0% e 15%';
+        if ($feePercentageCashout < 0) {
+            $_SESSION['error'] = 'Taxa percentual de cash-out não pode ser negativa';
             header('Location: /admin/sellers/view/' . $sellerId);
             exit;
         }
@@ -878,6 +892,62 @@ class AdminController {
 
         $_SESSION['success'] = 'Seller desbloqueado com sucesso!';
         header('Location: /admin/sellers/view/' . $sellerId);
+        exit;
+    }
+
+    public function settings() {
+        $settings = $this->settingsModel->getSettings();
+
+        if (!$settings) {
+            // Cria configuração padrão se não existir
+            $this->settingsModel->create([
+                'default_fee_percentage_cashin' => 0,
+                'default_fee_fixed_cashin' => 0,
+                'default_fee_percentage_cashout' => 0,
+                'default_fee_fixed_cashout' => 0
+            ]);
+            $settings = $this->settingsModel->getSettings();
+        }
+
+        require __DIR__ . '/../../views/admin/settings.php';
+    }
+
+    public function updateSettings() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/settings');
+            exit;
+        }
+
+        $feePercentageCashin = $this->parseDecimal($_POST['default_fee_percentage_cashin'] ?? 0) / 100;
+        $feeFixedCashin = $this->parseDecimal($_POST['default_fee_fixed_cashin'] ?? 0);
+        $feePercentageCashout = $this->parseDecimal($_POST['default_fee_percentage_cashout'] ?? 0) / 100;
+        $feeFixedCashout = $this->parseDecimal($_POST['default_fee_fixed_cashout'] ?? 0);
+
+        $this->settingsModel->updateSettings([
+            'default_fee_percentage_cashin' => $feePercentageCashin,
+            'default_fee_fixed_cashin' => $feeFixedCashin,
+            'default_fee_percentage_cashout' => $feePercentageCashout,
+            'default_fee_fixed_cashout' => $feeFixedCashout,
+            'updated_at' => date('Y-m-d H:i:s'),
+            'updated_by' => $_SESSION['user_id']
+        ]);
+
+        $this->logModel->create([
+            'level' => 'info',
+            'category' => 'admin',
+            'message' => 'Configurações do sistema atualizadas',
+            'context' => json_encode([
+                'default_fee_percentage_cashin' => $feePercentageCashin,
+                'default_fee_fixed_cashin' => $feeFixedCashin,
+                'default_fee_percentage_cashout' => $feePercentageCashout,
+                'default_fee_fixed_cashout' => $feeFixedCashout,
+                'updated_by' => $_SESSION['user_id']
+            ]),
+            'user_id' => $_SESSION['user_id']
+        ]);
+
+        $_SESSION['success'] = 'Configurações atualizadas com sucesso!';
+        header('Location: /admin/settings');
         exit;
     }
 

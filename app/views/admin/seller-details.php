@@ -145,13 +145,11 @@ $statusColors = [
                                     Taxa Percentual (%)
                                 </label>
                                 <div class="relative">
-                                    <input type="number"
+                                    <input type="text"
                                            name="fee_percentage_cashin"
-                                           value="<?= $seller['fee_percentage_cashin'] * 100 ?>"
-                                           step="0.01"
-                                           min="0"
-                                           max="15"
+                                           value="<?= number_format($seller['fee_percentage_cashin'] * 100, 2, ',', '') ?>"
                                            class="w-full px-4 py-2.5 pr-8"
+                                           placeholder="0,00"
                                            required>
                                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">%</span>
                                 </div>
@@ -163,12 +161,11 @@ $statusColors = [
                                 </label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">R$</span>
-                                    <input type="number"
+                                    <input type="text"
                                            name="fee_fixed_cashin"
-                                           value="<?= $seller['fee_fixed_cashin'] ?>"
-                                           step="0.01"
-                                           min="0"
+                                           value="<?= number_format($seller['fee_fixed_cashin'], 2, ',', '') ?>"
                                            class="w-full px-4 py-2.5 pl-11"
+                                           placeholder="0,00"
                                            required>
                                 </div>
                                 <p class="text-xs text-slate-500 mt-1">Atual: R$ <?= number_format($seller['fee_fixed_cashin'], 2, ',', '.') ?></p>
@@ -188,13 +185,11 @@ $statusColors = [
                                     Taxa Percentual (%)
                                 </label>
                                 <div class="relative">
-                                    <input type="number"
+                                    <input type="text"
                                            name="fee_percentage_cashout"
-                                           value="<?= $seller['fee_percentage_cashout'] * 100 ?>"
-                                           step="0.01"
-                                           min="0"
-                                           max="15"
+                                           value="<?= number_format($seller['fee_percentage_cashout'] * 100, 2, ',', '') ?>"
                                            class="w-full px-4 py-2.5 pr-8"
+                                           placeholder="0,00"
                                            required>
                                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">%</span>
                                 </div>
@@ -206,12 +201,11 @@ $statusColors = [
                                 </label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">R$</span>
-                                    <input type="number"
+                                    <input type="text"
                                            name="fee_fixed_cashout"
-                                           value="<?= $seller['fee_fixed_cashout'] ?>"
-                                           step="0.01"
-                                           min="0"
+                                           value="<?= number_format($seller['fee_fixed_cashout'], 2, ',', '') ?>"
                                            class="w-full px-4 py-2.5 pl-11"
+                                           placeholder="0,00"
                                            required>
                                 </div>
                                 <p class="text-xs text-slate-500 mt-1">Atual: R$ <?= number_format($seller['fee_fixed_cashout'], 2, ',', '.') ?></p>
@@ -239,16 +233,14 @@ $statusColors = [
                                 % Retenção do Faturamento
                             </label>
                             <div class="relative">
-                                <input type="number"
+                                <input type="text"
                                        name="revenue_retention_percentage"
-                                       value="<?= $seller['revenue_retention_percentage'] ?>"
-                                       step="0.01"
-                                       min="0"
-                                       max="100"
-                                       class="w-full px-4 py-2.5 pr-10">
+                                       value="<?= number_format($seller['revenue_retention_percentage'], 2, ',', '') ?>"
+                                       class="w-full px-4 py-2.5 pr-10"
+                                       placeholder="0,00">
                                 <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">%</span>
                             </div>
-                            <p class="text-xs text-slate-500 mt-1">0% = sem retenção | Atual: <?= number_format($seller['revenue_retention_percentage'], 2) ?>%</p>
+                            <p class="text-xs text-slate-500 mt-1">0% = sem retenção | Atual: <?= number_format($seller['revenue_retention_percentage'], 2, ',', '') ?>%</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-300 mb-2">Motivo da Retenção</label>
