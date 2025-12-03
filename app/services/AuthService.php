@@ -73,18 +73,53 @@ class AuthService {
         if (trim($seller['api_secret']) !== trim($hashedApiSecret)) {
             if (APP_ENV === 'development') {
                 error_log('!!! AUTHENTICATION FAILED !!!');
-                error_log('DB Secret: ' . $seller['api_secret']);
-                error_log('Hashed Input: ' . $hashedApiSecret);
-                error_log('Match: ' . ($seller['api_secret'] === $hashedApiSecret ? 'YES' : 'NO'));
+                error_log('Seller ID: ' . $seller['id']);
+                error_log('Seller Name: ' . $seller['name']);
+                error_log('Received Secret (plain): ' . $apiSecret);
+                error_log('Received Secret Length: ' . strlen($apiSecret));
+                error_log('Received Secret First 16: ' . substr($apiSecret, 0, 16));
+                error_log('Received Secret Last 16: ' . substr($apiSecret, -16));
+                error_log('');
+                error_log('Hashed Received Secret: ' . $hashedApiSecret);
+                error_log('Hashed Length: ' . strlen($hashedApiSecret));
+                error_log('Hashed First 16: ' . substr($hashedApiSecret, 0, 16));
+                error_log('Hashed Last 16: ' . substr($hashedApiSecret, -16));
+                error_log('');
+                error_log('DB Secret (stored hash): ' . $seller['api_secret']);
                 error_log('DB Secret Length: ' . strlen($seller['api_secret']));
-                error_log('Hashed Input Length: ' . strlen($hashedApiSecret));
+                error_log('DB Secret First 16: ' . substr($seller['api_secret'], 0, 16));
+                error_log('DB Secret Last 16: ' . substr($seller['api_secret'], -16));
+                error_log('');
+                error_log('Match: ' . ($seller['api_secret'] === $hashedApiSecret ? 'YES' : 'NO'));
+                error_log('Trimmed Match: ' . (trim($seller['api_secret']) === trim($hashedApiSecret) ? 'YES' : 'NO'));
+
+                // Verifica se o secret no banco é texto plano por engano
+                $hashOfDbSecret = hash('sha256', $seller['api_secret']);
+                error_log('');
+                error_log('TEST: Hash do secret do banco: ' . $hashOfDbSecret);
+                error_log('TEST: Secret enviado: ' . $apiSecret);
+                error_log('TEST: DB secret é texto plano?: ' . ($seller['api_secret'] === $apiSecret ? 'YES (BUG!)' : 'NO'));
+
+                // Compara byte a byte
+                $diffCount = 0;
+                $maxLen = max(strlen($seller['api_secret']), strlen($hashedApiSecret));
+                for ($i = 0; $i < $maxLen && $i < 10; $i++) {
+                    $dbChar = isset($seller['api_secret'][$i]) ? $seller['api_secret'][$i] : 'EOF';
+                    $hashChar = isset($hashedApiSecret[$i]) ? $hashedApiSecret[$i] : 'EOF';
+                    if ($dbChar !== $hashChar) {
+                        $diffCount++;
+                        error_log("Diff at pos {$i}: DB='{$dbChar}' vs Hash='{$hashChar}'");
+                    }
+                }
             }
 
             $this->logModel->warning('auth', 'Invalid API Secret in Basic Auth', [
                 'seller_id' => $seller['id'],
                 'ip' => getClientIp(),
                 'expected_length' => strlen($seller['api_secret']),
-                'received_hash_length' => strlen($hashedApiSecret)
+                'received_hash_length' => strlen($hashedApiSecret),
+                'db_secret_preview' => substr($seller['api_secret'], 0, 8) . '...',
+                'hashed_preview' => substr($hashedApiSecret, 0, 8) . '...'
             ]);
             errorResponse('Invalid credentials', 401);
         }
