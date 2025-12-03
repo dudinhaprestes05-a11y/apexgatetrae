@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS system_settings (
     default_fee_percentage_cashout DECIMAL(5,4) DEFAULT 0.0000,
     default_fee_fixed_cashout DECIMAL(10,2) DEFAULT 0.00,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    updated_by INT,
+    updated_by INT NULL,
     FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
