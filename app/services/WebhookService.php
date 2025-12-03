@@ -29,7 +29,7 @@ class WebhookService {
         if ($transactionType === 'cashin') {
             $payload = [
                 'type' => 'pix.cashin',
-                'pix_id' => $transactionData['id'] ?? null,
+                'transaction_id' => $transactionData['transaction_id'] ?? null,
                 'external_id' => $transactionData['external_id'] ?? null,
                 'status' => $transactionData['status'],
                 'amount' => $transactionData['amount'],
@@ -38,7 +38,7 @@ class WebhookService {
         } else {
             $payload = [
                 'type' => 'pix.cashout',
-                'cashout_id' => $transactionData['id'] ?? null,
+                'transaction_id' => $transactionData['transaction_id'] ?? null,
                 'external_id' => $transactionData['external_id'] ?? null,
                 'status' => $transactionData['status'],
                 'net_amount' => $transactionData['net_amount'],
