@@ -36,9 +36,9 @@ $periodLabels = [
             </div>
         </div>
         <p class="text-slate-400 text-sm mb-1">Receita Total</p>
-        <p class="text-3xl font-bold text-white">R$ <?= number_format(rand(5000, 50000), 2, ',', '.') ?></p>
-        <p class="text-xs text-green-400 mt-2">
-            <i class="fas fa-arrow-up mr-1"></i><?= rand(5, 25) ?>% vs período anterior
+        <p class="text-3xl font-bold text-white">R$ <?= number_format($stats['total_revenue'], 2, ',', '.') ?></p>
+        <p class="text-xs text-slate-400 mt-2">
+            <i class="fas fa-info-circle mr-1"></i>Taxas do período
         </p>
     </div>
 
@@ -49,9 +49,9 @@ $periodLabels = [
             </div>
         </div>
         <p class="text-slate-400 text-sm mb-1">Total Transações</p>
-        <p class="text-3xl font-bold text-white"><?= number_format(rand(500, 5000), 0, ',', '.') ?></p>
-        <p class="text-xs text-green-400 mt-2">
-            <i class="fas fa-arrow-up mr-1"></i><?= rand(3, 15) ?>% vs período anterior
+        <p class="text-3xl font-bold text-white"><?= number_format($stats['total_transactions'], 0, ',', '.') ?></p>
+        <p class="text-xs text-slate-400 mt-2">
+            <i class="fas fa-info-circle mr-1"></i>Cash-in + Cash-out
         </p>
     </div>
 
@@ -62,9 +62,9 @@ $periodLabels = [
             </div>
         </div>
         <p class="text-slate-400 text-sm mb-1">Volume Total</p>
-        <p class="text-3xl font-bold text-white">R$ <?= number_format(rand(100000, 1000000), 0, ',', '.') ?></p>
-        <p class="text-xs text-green-400 mt-2">
-            <i class="fas fa-arrow-up mr-1"></i><?= rand(8, 20) ?>% vs período anterior
+        <p class="text-3xl font-bold text-white">R$ <?= number_format($stats['total_volume'], 2, ',', '.') ?></p>
+        <p class="text-xs text-slate-400 mt-2">
+            <i class="fas fa-info-circle mr-1"></i>Volume processado
         </p>
     </div>
 
@@ -104,6 +104,7 @@ $periodLabels = [
 <!-- Top Sellers Table -->
 <div class="card p-6 mb-8">
     <h3 class="text-xl font-bold text-white mb-6">Top Sellers</h3>
+    <?php if (!empty($stats['top_sellers'])): ?>
     <div class="overflow-x-auto">
         <table class="w-full table-dark">
             <thead>
@@ -117,40 +118,44 @@ $periodLabels = [
                 </tr>
             </thead>
             <tbody>
-                <?php for ($i = 1; $i <= 10; $i++):
-                    $volume = rand(10000, 100000);
-                    $transactions = rand(50, 500);
-                    $revenue = $volume * (rand(99, 299) / 10000);
+                <?php foreach ($stats['top_sellers'] as $index => $seller):
+                    $position = $index + 1;
                 ?>
                 <tr>
                     <td class="px-6 py-4">
-                        <?php if ($i <= 3): ?>
+                        <?php if ($position <= 3): ?>
                             <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-yellow-500 to-yellow-600 text-white font-bold">
-                                <?= $i ?>
+                                <?= $position ?>
                             </span>
                         <?php else: ?>
                             <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-700 text-slate-300 font-semibold">
-                                <?= $i ?>
+                                <?= $position ?>
                             </span>
                         <?php endif; ?>
                     </td>
                     <td class="px-6 py-4">
                         <div>
-                            <p class="text-white font-medium">Seller <?= $i ?></p>
-                            <p class="text-sm text-slate-400">seller<?= $i ?>@example.com</p>
+                            <p class="text-white font-medium"><?= htmlspecialchars($seller['name']) ?></p>
+                            <p class="text-sm text-slate-400"><?= htmlspecialchars($seller['email']) ?></p>
                         </div>
                     </td>
-                    <td class="px-6 py-4 text-white font-semibold">R$ <?= number_format($volume, 2, ',', '.') ?></td>
-                    <td class="px-6 py-4 text-white"><?= number_format($transactions, 0, ',', '.') ?></td>
-                    <td class="px-6 py-4 text-green-400 font-semibold">R$ <?= number_format($revenue, 2, ',', '.') ?></td>
+                    <td class="px-6 py-4 text-white font-semibold">R$ <?= number_format($seller['total_volume'], 2, ',', '.') ?></td>
+                    <td class="px-6 py-4 text-white"><?= number_format($seller['total_transactions'], 0, ',', '.') ?></td>
+                    <td class="px-6 py-4 text-green-400 font-semibold">R$ <?= number_format($seller['total_fees'], 2, ',', '.') ?></td>
                     <td class="px-6 py-4">
-                        <span class="badge badge-info"><?= number_format(rand(99, 299) / 100, 2) ?>%</span>
+                        <span class="badge badge-info"><?= number_format($seller['avg_fee_percentage'], 2) ?>%</span>
                     </td>
                 </tr>
-                <?php endfor; ?>
+                <?php endforeach; ?>
             </tbody>
         </table>
     </div>
+    <?php else: ?>
+    <div class="text-center py-12">
+        <i class="fas fa-chart-bar text-slate-600 text-5xl mb-4"></i>
+        <p class="text-slate-400">Nenhum dado disponível no período selecionado</p>
+    </div>
+    <?php endif; ?>
 </div>
 
 <!-- Detailed Breakdown -->
@@ -164,19 +169,19 @@ $periodLabels = [
         <div class="space-y-4">
             <div class="flex items-center justify-between">
                 <span class="text-slate-400 text-sm">Volume</span>
-                <span class="text-white font-semibold">R$ <?= number_format(rand(80000, 800000), 2, ',', '.') ?></span>
+                <span class="text-white font-semibold">R$ <?= number_format($stats['cashin']['total_volume'] ?? 0, 2, ',', '.') ?></span>
             </div>
             <div class="flex items-center justify-between">
                 <span class="text-slate-400 text-sm">Transações</span>
-                <span class="text-white font-semibold"><?= number_format(rand(400, 4000), 0, ',', '.') ?></span>
+                <span class="text-white font-semibold"><?= number_format($stats['cashin']['successful_transactions'] ?? 0, 0, ',', '.') ?></span>
             </div>
             <div class="flex items-center justify-between">
                 <span class="text-slate-400 text-sm">Ticket Médio</span>
-                <span class="text-white font-semibold">R$ <?= number_format(rand(50, 500), 2, ',', '.') ?></span>
+                <span class="text-white font-semibold">R$ <?= number_format($stats['cashin']['avg_ticket'] ?? 0, 2, ',', '.') ?></span>
             </div>
             <div class="flex items-center justify-between">
                 <span class="text-slate-400 text-sm">Taxa de Sucesso</span>
-                <span class="badge badge-success"><?= rand(92, 99) ?>%</span>
+                <span class="badge badge-success"><?= number_format($stats['success_rate'], 1) ?>%</span>
             </div>
         </div>
     </div>
@@ -190,19 +195,19 @@ $periodLabels = [
         <div class="space-y-4">
             <div class="flex items-center justify-between">
                 <span class="text-slate-400 text-sm">Volume</span>
-                <span class="text-white font-semibold">R$ <?= number_format(rand(40000, 400000), 2, ',', '.') ?></span>
+                <span class="text-white font-semibold">R$ <?= number_format($stats['cashout']['total_volume'] ?? 0, 2, ',', '.') ?></span>
             </div>
             <div class="flex items-center justify-between">
                 <span class="text-slate-400 text-sm">Transações</span>
-                <span class="text-white font-semibold"><?= number_format(rand(100, 1000), 0, ',', '.') ?></span>
+                <span class="text-white font-semibold"><?= number_format($stats['cashout']['successful_transactions'] ?? 0, 0, ',', '.') ?></span>
             </div>
             <div class="flex items-center justify-between">
                 <span class="text-slate-400 text-sm">Ticket Médio</span>
-                <span class="text-white font-semibold">R$ <?= number_format(rand(100, 800), 2, ',', '.') ?></span>
+                <span class="text-white font-semibold">R$ <?= number_format($stats['cashout']['avg_ticket'] ?? 0, 2, ',', '.') ?></span>
             </div>
             <div class="flex items-center justify-between">
-                <span class="text-slate-400 text-sm">Taxa de Sucesso</span>
-                <span class="badge badge-success"><?= rand(88, 96) ?>%</span>
+                <span class="text-slate-400 text-sm">Pendentes</span>
+                <span class="badge badge-warning"><?= number_format($stats['cashout']['pending_transactions'] ?? 0, 0, ',', '.') ?></span>
             </div>
         </div>
     </div>
@@ -215,35 +220,63 @@ $periodLabels = [
         </h3>
         <div class="space-y-4">
             <div class="flex items-center justify-between">
-                <span class="text-slate-400 text-sm">Tempo Médio</span>
-                <span class="text-white font-semibold"><?= rand(1, 5) ?>s</span>
+                <span class="text-slate-400 text-sm">Sucesso Cash-in</span>
+                <span class="badge badge-success"><?= number_format($stats['success_rate'], 1) ?>%</span>
             </div>
             <div class="flex items-center justify-between">
-                <span class="text-slate-400 text-sm">Uptime</span>
-                <span class="badge badge-success">99.<?= rand(5, 9) ?>%</span>
+                <span class="text-slate-400 text-sm">Pendentes</span>
+                <span class="text-white font-semibold"><?= number_format(($stats['cashin']['pending_transactions'] ?? 0) + ($stats['cashout']['pending_transactions'] ?? 0), 0, ',', '.') ?></span>
             </div>
             <div class="flex items-center justify-between">
-                <span class="text-slate-400 text-sm">Webhooks Entregues</span>
-                <span class="text-white font-semibold"><?= rand(90, 99) ?>%</span>
+                <span class="text-slate-400 text-sm">Falhadas</span>
+                <span class="text-white font-semibold"><?= number_format(($stats['cashin']['failed_transactions'] ?? 0) + ($stats['cashout']['failed_transactions'] ?? 0), 0, ',', '.') ?></span>
             </div>
             <div class="flex items-center justify-between">
-                <span class="text-slate-400 text-sm">Chargebacks</span>
-                <span class="text-white font-semibold">0.<?= rand(1, 5) ?>%</span>
+                <span class="text-slate-400 text-sm">Total Taxas</span>
+                <span class="text-green-400 font-semibold">R$ <?= number_format($stats['total_revenue'], 2, ',', '.') ?></span>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+<?php
+$chartLabels = [];
+$chartRevenue = [];
+$chartVolume = [];
+
+if (!empty($stats['daily'])) {
+    foreach ($stats['daily'] as $day) {
+        $chartLabels[] = date('d/m', strtotime($day['date']));
+        $chartRevenue[] = floatval($day['fees']);
+        $chartVolume[] = floatval($day['volume']);
+    }
+} else {
+    $chartLabels = ['Sem dados'];
+    $chartRevenue = [0];
+    $chartVolume = [0];
+}
+
+$cashinVolume = $stats['cashin']['total_volume'] ?? 0;
+$cashoutVolume = $stats['cashout']['total_volume'] ?? 0;
+$feesAmount = $stats['total_revenue'] ?? 0;
+$totalProcessed = $cashinVolume + $cashoutVolume + $feesAmount;
+
+$cashinPercent = $totalProcessed > 0 ? round(($cashinVolume / $totalProcessed) * 100) : 0;
+$cashoutPercent = $totalProcessed > 0 ? round(($cashoutVolume / $totalProcessed) * 100) : 0;
+$feesPercent = $totalProcessed > 0 ? round(($feesAmount / $totalProcessed) * 100) : 0;
+$splitPercent = max(0, 100 - $cashinPercent - $cashoutPercent - $feesPercent);
+?>
+
 // Revenue Trend Chart
 const revenueTrendCtx = document.getElementById('revenueTrendChart').getContext('2d');
 new Chart(revenueTrendCtx, {
     type: 'line',
     data: {
-        labels: <?= $stats['period'] === '7days' ? '["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]' : ($stats['period'] === '30days' ? '["Sem 1", "Sem 2", "Sem 3", "Sem 4"]' : '["Mês 1", "Mês 2", "Mês 3"]') ?>,
+        labels: <?= json_encode($chartLabels) ?>,
         datasets: [{
             label: 'Receita (R$)',
-            data: [<?= implode(',', array_map(fn() => rand(1000, 10000), range(1, $stats['period'] === '7days' ? 7 : ($stats['period'] === '30days' ? 4 : 3)))) ?>],
+            data: <?= json_encode($chartRevenue) ?>,
             borderColor: 'rgb(59, 130, 246)',
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
             tension: 0.4,
@@ -293,7 +326,7 @@ new Chart(transactionTypesCtx, {
     data: {
         labels: ['Cash-in', 'Cash-out', 'Taxas', 'Splits'],
         datasets: [{
-            data: [<?= rand(60, 80) ?>, <?= rand(15, 25) ?>, <?= rand(5, 10) ?>, <?= rand(2, 5) ?>],
+            data: [<?= $cashinPercent ?>, <?= $cashoutPercent ?>, <?= $feesPercent ?>, <?= $splitPercent ?>],
             backgroundColor: [
                 'rgba(34, 197, 94, 0.8)',
                 'rgba(239, 68, 68, 0.8)',

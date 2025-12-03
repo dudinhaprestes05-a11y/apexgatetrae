@@ -11,9 +11,6 @@ require_once __DIR__ . '/../layouts/header.php';
             <div class="stat-icon w-12 h-12 rounded-xl flex items-center justify-center">
                 <i class="fas fa-store text-white text-xl"></i>
             </div>
-            <span class="badge badge-success">
-                <i class="fas fa-arrow-up mr-1"></i><?= rand(5, 15) ?>%
-            </span>
         </div>
         <div>
             <p class="text-slate-400 text-sm mb-1">Sellers Ativos</p>
@@ -308,24 +305,37 @@ require_once __DIR__ . '/../layouts/header.php';
 </div>
 
 <script>
+<?php
+$dashLabels = [];
+$dashCashinTransactions = [];
+$dashRevenue = [];
+
+if (!empty($stats['daily_cashin'])) {
+    foreach ($stats['daily_cashin'] as $day) {
+        $dashLabels[] = date('d/m', strtotime($day['date']));
+        $dashCashinTransactions[] = intval($day['transactions']);
+        $dashRevenue[] = floatval($day['fees']);
+    }
+} else {
+    for ($i = 6; $i >= 0; $i--) {
+        $dashLabels[] = date('d/m', strtotime("-$i days"));
+        $dashCashinTransactions[] = 0;
+        $dashRevenue[] = 0;
+    }
+}
+?>
+
 // Transactions Volume Chart
 const transactionsCtx = document.getElementById('transactionsChart').getContext('2d');
 new Chart(transactionsCtx, {
     type: 'line',
     data: {
-        labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+        labels: <?= json_encode($dashLabels) ?>,
         datasets: [{
-            label: 'Cash-in',
-            data: [<?= rand(10, 50) ?>, <?= rand(15, 60) ?>, <?= rand(20, 70) ?>, <?= rand(25, 80) ?>, <?= rand(30, 90) ?>, <?= rand(20, 60) ?>, <?= rand(15, 50) ?>],
+            label: 'Transações Cash-in',
+            data: <?= json_encode($dashCashinTransactions) ?>,
             borderColor: 'rgb(34, 197, 94)',
             backgroundColor: 'rgba(34, 197, 94, 0.1)',
-            tension: 0.4,
-            fill: true
-        }, {
-            label: 'Cash-out',
-            data: [<?= rand(5, 30) ?>, <?= rand(10, 40) ?>, <?= rand(15, 50) ?>, <?= rand(20, 60) ?>, <?= rand(25, 70) ?>, <?= rand(15, 50) ?>, <?= rand(10, 40) ?>],
-            borderColor: 'rgb(239, 68, 68)',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
             tension: 0.4,
             fill: true
         }]
@@ -367,10 +377,10 @@ const revenueCtx = document.getElementById('revenueChart').getContext('2d');
 new Chart(revenueCtx, {
     type: 'bar',
     data: {
-        labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+        labels: <?= json_encode($dashLabels) ?>,
         datasets: [{
             label: 'Receita (R$)',
-            data: [<?= rand(50, 200) ?>, <?= rand(75, 250) ?>, <?= rand(100, 300) ?>, <?= rand(125, 350) ?>, <?= rand(150, 400) ?>, <?= rand(100, 300) ?>, <?= rand(75, 250) ?>],
+            data: <?= json_encode($dashRevenue) ?>,
             backgroundColor: 'rgba(59, 130, 246, 0.8)',
             borderColor: 'rgb(59, 130, 246)',
             borderWidth: 1,

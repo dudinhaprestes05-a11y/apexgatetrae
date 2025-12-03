@@ -248,4 +248,31 @@ class PixCashout extends BaseModel {
 
         return $stmt->fetchAll();
     }
+
+    public function getStats($dateFrom = null) {
+        $params = [];
+        $dateFilter = '';
+
+        if ($dateFrom) {
+            $dateFilter = "WHERE created_at >= ?";
+            $params[] = $dateFrom;
+        }
+
+        $sql = "
+            SELECT
+                COUNT(*) as total_transactions,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0) as total_volume,
+                COUNT(CASE WHEN status = 'completed' THEN 1 END) as successful_transactions,
+                COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_transactions,
+                COUNT(CASE WHEN status IN ('cancelled', 'failed') THEN 1 END) as failed_transactions,
+                COALESCE(AVG(CASE WHEN status = 'completed' THEN amount END), 0) as avg_ticket
+            FROM {$this->table}
+            {$dateFilter}
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetch();
+    }
 }

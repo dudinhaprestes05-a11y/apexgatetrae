@@ -37,12 +37,16 @@ class AdminController {
     }
 
     public function dashboard() {
+        $dateFrom = date('Y-m-d', strtotime('-7 days'));
+
         $stats = [
             'total_sellers' => $this->sellerModel->count(['status' => 'active']),
             'pending_sellers' => $this->sellerModel->count(['status' => 'pending']),
             'total_cashin' => $this->cashinModel->getTotalAmount(),
             'total_cashout' => $this->cashoutModel->getTotalAmount(),
             'pending_documents' => $this->documentModel->count(['status' => 'pending']),
+            'daily_cashin' => $this->cashinModel->getDailyStats($dateFrom),
+            'daily_cashout' => []
         ];
 
         $recentSellers = $this->sellerModel->where(['status' => 'pending'], 'created_at DESC', 5);
@@ -619,13 +623,33 @@ class AdminController {
             default => date('Y-m-d', strtotime('-7 days'))
         };
 
+        $cashinStats = $this->cashinModel->getStats($dateFrom);
+        $cashoutStats = $this->cashoutModel->getStats($dateFrom);
+        $dailyStats = $this->cashinModel->getDailyStats($dateFrom);
+        $topSellers = $this->sellerModel->getTopSellers(10, $dateFrom);
+
         $stats = [
             'period' => $period,
             'date_from' => $dateFrom,
-            'total_sellers' => $this->sellerModel->count(['status' => 'active'])
+            'total_sellers' => $this->sellerModel->count(['status' => 'active']),
+            'cashin' => $cashinStats,
+            'cashout' => $cashoutStats,
+            'daily' => $dailyStats,
+            'top_sellers' => $topSellers,
+            'total_revenue' => ($cashinStats['total_fees'] ?? 0),
+            'total_transactions' => ($cashinStats['total_transactions'] ?? 0) + ($cashoutStats['total_transactions'] ?? 0),
+            'total_volume' => ($cashinStats['total_volume'] ?? 0) + ($cashoutStats['total_volume'] ?? 0),
+            'success_rate' => $this->calculateSuccessRate($cashinStats)
         ];
 
         require __DIR__ . '/../../views/admin/reports.php';
+    }
+
+    private function calculateSuccessRate($stats) {
+        $total = ($stats['total_transactions'] ?? 0);
+        if ($total == 0) return 0;
+        $successful = ($stats['successful_transactions'] ?? 0);
+        return round(($successful / $total) * 100, 2);
     }
 
     public function logs() {

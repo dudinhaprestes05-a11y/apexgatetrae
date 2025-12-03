@@ -98,4 +98,38 @@ class Seller extends BaseModel {
             'api_secret' => $newApiSecret
         ];
     }
+
+    public function getTopSellers($limit = 10, $dateFrom = null) {
+        $params = [];
+        $dateFilter = '';
+
+        if ($dateFrom) {
+            $dateFilter = "AND pc.created_at >= ?";
+            $params[] = $dateFrom;
+        }
+
+        $sql = "
+            SELECT
+                s.id,
+                s.name,
+                s.email,
+                COALESCE(SUM(CASE WHEN pc.status = 'paid' THEN pc.amount ELSE 0 END), 0) as total_volume,
+                COUNT(CASE WHEN pc.status = 'paid' THEN 1 END) as total_transactions,
+                COALESCE(SUM(CASE WHEN pc.status = 'paid' THEN pc.fee_amount ELSE 0 END), 0) as total_fees,
+                COALESCE(AVG(CASE WHEN pc.status = 'paid' THEN pc.fee_percentage END), 0) as avg_fee_percentage
+            FROM sellers s
+            LEFT JOIN pix_cashin pc ON s.id = pc.seller_id {$dateFilter}
+            WHERE s.status = 'active'
+            GROUP BY s.id, s.name, s.email
+            ORDER BY total_volume DESC
+            LIMIT ?
+        ";
+
+        $params[] = $limit;
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
+    }
 }

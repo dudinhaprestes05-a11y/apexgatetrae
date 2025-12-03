@@ -251,4 +251,51 @@ class PixCashin extends BaseModel {
 
         return $stmt->fetchAll();
     }
+
+    public function getStats($dateFrom = null) {
+        $params = [];
+        $dateFilter = '';
+
+        if ($dateFrom) {
+            $dateFilter = "WHERE created_at >= ?";
+            $params[] = $dateFrom;
+        }
+
+        $sql = "
+            SELECT
+                COUNT(*) as total_transactions,
+                COALESCE(SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END), 0) as total_volume,
+                COALESCE(SUM(CASE WHEN status = 'paid' THEN fee_amount ELSE 0 END), 0) as total_fees,
+                COUNT(CASE WHEN status = 'paid' THEN 1 END) as successful_transactions,
+                COUNT(CASE WHEN status IN ('waiting_payment', 'pending') THEN 1 END) as pending_transactions,
+                COUNT(CASE WHEN status IN ('cancelled', 'expired', 'failed') THEN 1 END) as failed_transactions,
+                COALESCE(AVG(CASE WHEN status = 'paid' THEN amount END), 0) as avg_ticket
+            FROM {$this->table}
+            {$dateFilter}
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetch();
+    }
+
+    public function getDailyStats($dateFrom, $days = 7) {
+        $sql = "
+            SELECT
+                DATE(created_at) as date,
+                COUNT(*) as transactions,
+                COALESCE(SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END), 0) as volume,
+                COALESCE(SUM(CASE WHEN status = 'paid' THEN fee_amount ELSE 0 END), 0) as fees
+            FROM {$this->table}
+            WHERE created_at >= ?
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$dateFrom]);
+
+        return $stmt->fetchAll();
+    }
 }
