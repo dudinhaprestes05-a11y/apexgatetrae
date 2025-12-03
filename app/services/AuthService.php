@@ -71,9 +71,20 @@ class AuthService {
         }
 
         if (trim($seller['api_secret']) !== trim($hashedApiSecret)) {
+            if (APP_ENV === 'development') {
+                error_log('!!! AUTHENTICATION FAILED !!!');
+                error_log('DB Secret: ' . $seller['api_secret']);
+                error_log('Hashed Input: ' . $hashedApiSecret);
+                error_log('Match: ' . ($seller['api_secret'] === $hashedApiSecret ? 'YES' : 'NO'));
+                error_log('DB Secret Length: ' . strlen($seller['api_secret']));
+                error_log('Hashed Input Length: ' . strlen($hashedApiSecret));
+            }
+
             $this->logModel->warning('auth', 'Invalid API Secret in Basic Auth', [
                 'seller_id' => $seller['id'],
-                'ip' => getClientIp()
+                'ip' => getClientIp(),
+                'expected_length' => strlen($seller['api_secret']),
+                'received_hash_length' => strlen($hashedApiSecret)
             ]);
             errorResponse('Invalid credentials', 401);
         }
