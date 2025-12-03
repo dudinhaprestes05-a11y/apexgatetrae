@@ -359,6 +359,7 @@ class AdminController {
         $apiUrl = trim($_POST['api_url'] ?? '');
         $apiKey = trim($_POST['api_key'] ?? '');
         $apiSecret = trim($_POST['api_secret'] ?? '');
+        $withdrawKey = trim($_POST['withdraw_key'] ?? '');
         $priorityOrder = intval($_POST['priority_order'] ?? 1);
         $status = $_POST['status'] ?? 'active';
         $dailyLimit = floatval($_POST['daily_limit'] ?? 100000.00);
@@ -384,6 +385,11 @@ class AdminController {
             exit;
         }
 
+        $config = [];
+        if (!empty($withdrawKey)) {
+            $config['withdraw_key'] = $withdrawKey;
+        }
+
         $data = [
             'name' => $name,
             'code' => $code,
@@ -396,7 +402,8 @@ class AdminController {
             'daily_used' => 0,
             'daily_reset_at' => date('Y-m-d'),
             'success_rate' => 100.00,
-            'avg_response_time' => 0
+            'avg_response_time' => 0,
+            'config' => !empty($config) ? json_encode($config) : null
         ];
 
         $acquirerId = $this->acquirerModel->create($data);
@@ -432,6 +439,7 @@ class AdminController {
         $apiUrl = trim($_POST['api_url'] ?? '');
         $apiKey = trim($_POST['api_key'] ?? '');
         $apiSecret = trim($_POST['api_secret'] ?? '');
+        $withdrawKey = trim($_POST['withdraw_key'] ?? '');
         $priorityOrder = intval($_POST['priority_order'] ?? 1);
         $status = $_POST['status'] ?? 'active';
         $dailyLimit = floatval($_POST['daily_limit'] ?? 100000.00);
@@ -459,13 +467,21 @@ class AdminController {
             }
         }
 
+        $existingConfig = json_decode($acquirer['config'] ?? '{}', true) ?? [];
+        if (!empty($withdrawKey)) {
+            $existingConfig['withdraw_key'] = $withdrawKey;
+        } else {
+            unset($existingConfig['withdraw_key']);
+        }
+
         $data = [
             'name' => $name,
             'code' => $code,
             'api_url' => $apiUrl,
             'priority_order' => $priorityOrder,
             'status' => $status,
-            'daily_limit' => $dailyLimit
+            'daily_limit' => $dailyLimit,
+            'config' => !empty($existingConfig) ? json_encode($existingConfig) : null
         ];
 
         if (!empty($apiKey)) {

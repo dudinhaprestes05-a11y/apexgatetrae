@@ -2,7 +2,48 @@
 
 ## Autenticação
 
-Todas as requisições devem incluir:
+### Método Recomendado: Basic Authentication
+
+Todas as requisições devem usar HTTP Basic Auth:
+
+```bash
+Authorization: Basic base64(API_KEY:API_SECRET)
+Content-Type: application/json
+```
+
+### Exemplo Completo (cURL)
+
+```bash
+curl -X POST https://gateway.seudominio.com/api/pix/create \
+  -u "sk_test_demo_key_123456789:sk_secret_demo_key_987654321" \
+  -H "Content-Type: application/json" \
+  -d '{"amount": 100.50}'
+```
+
+### Exemplo em PHP
+
+```php
+<?php
+$apiKey = 'sk_test_demo_key_123456789';
+$apiSecret = 'sk_secret_demo_key_987654321';
+$auth = base64_encode("$apiKey:$apiSecret");
+
+$ch = curl_init('https://gateway.seudominio.com/api/pix/create');
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Authorization: Basic ' . $auth,
+    'Content-Type: application/json'
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+    'amount' => 100.50
+]));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$response = curl_exec($ch);
+curl_close($ch);
+```
+
+### Método Legado (HMAC)
+
+Para compatibilidade, ainda suportamos autenticação via HMAC:
 
 ```bash
 X-API-Key: sk_test_demo_key_123456789
@@ -10,7 +51,7 @@ X-Signature: <HMAC_SHA256>
 Content-Type: application/json
 ```
 
-### Gerando Assinatura HMAC (PHP)
+Gerando assinatura HMAC:
 
 ```php
 <?php
@@ -25,9 +66,8 @@ $signature = hash_hmac('sha256', $payload, $apiSecret);
 
 ```bash
 curl -X POST https://gateway.seudominio.com/api/pix/create \
+  -u "sk_test_demo_key_123456789:sk_secret_demo_key_987654321" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: sk_test_demo_key_123456789" \
-  -H "X-Signature: a1b2c3d4e5f6..." \
   -d '{
     "external_id": "ORDER_12345",
     "amount": 100.50,
@@ -183,9 +223,8 @@ curl -X GET "https://gateway.seudominio.com/api/pix/list?status=paid&start_date=
 
 ```bash
 curl -X POST https://gateway.seudominio.com/api/cashout/create \
+  -u "sk_test_demo_key_123456789:sk_secret_demo_key_987654321" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: sk_test_demo_key_123456789" \
-  -H "X-Signature: x1y2z3..." \
   -d '{
     "external_id": "PAYOUT_789",
     "amount": 500.00,
@@ -198,9 +237,8 @@ curl -X POST https://gateway.seudominio.com/api/cashout/create \
 
 ```bash
 curl -X POST https://gateway.seudominio.com/api/cashout/create \
+  -u "sk_test_demo_key_123456789:sk_secret_demo_key_987654321" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: sk_test_demo_key_123456789" \
-  -H "X-Signature: x1y2z3..." \
   -d '{
     "external_id": "PAYOUT_790",
     "amount": 1000.00,

@@ -2,15 +2,88 @@
 
 ## Autenticação
 
-Todas as requisições à API devem incluir os seguintes headers:
+### Método Recomendado: Basic Authentication
 
+O método preferencial de autenticação é via HTTP Basic Auth:
+
+```
+Authorization: Basic base64(API_KEY:API_SECRET)
+Content-Type: application/json
+```
+
+**Exemplos:**
+
+**cURL:**
+```bash
+curl -X POST https://gateway.seudominio.com/api/pix/create \
+  -u "sua_api_key:seu_api_secret" \
+  -H "Content-Type: application/json" \
+  -d '{"amount": 100.50}'
+```
+
+**PHP:**
+```php
+$apiKey = 'sua_api_key';
+$apiSecret = 'seu_api_secret';
+$auth = base64_encode("$apiKey:$apiSecret");
+
+$headers = [
+    'Authorization: Basic ' . $auth,
+    'Content-Type: application/json'
+];
+```
+
+**Python:**
+```python
+import requests
+import base64
+
+api_key = 'sua_api_key'
+api_secret = 'seu_api_secret'
+auth = base64.b64encode(f"{api_key}:{api_secret}".encode()).decode()
+
+headers = {
+    'Authorization': f'Basic {auth}',
+    'Content-Type': 'application/json'
+}
+```
+
+**Node.js:**
+```javascript
+const apiKey = 'sua_api_key';
+const apiSecret = 'seu_api_secret';
+const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
+
+const headers = {
+  'Authorization': `Basic ${auth}`,
+  'Content-Type': 'application/json'
+};
+```
+
+### Métodos de Compatibilidade
+
+Para compatibilidade com integrações antigas, também suportamos:
+
+**1. Bearer Token:**
+```
+Authorization: Bearer sua_api_key
+Content-Type: application/json
+```
+
+**2. X-API-Key Header:**
+```
+X-API-Key: sua_api_key
+Content-Type: application/json
+```
+
+**3. X-API-Key + HMAC Signature (legado):**
 ```
 X-API-Key: sua_api_key
 X-Signature: hmac_sha256(request_body, api_secret)
 Content-Type: application/json
 ```
 
-### Gerando a Assinatura HMAC
+#### Gerando a Assinatura HMAC (método legado)
 
 **PHP:**
 ```php

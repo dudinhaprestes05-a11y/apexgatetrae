@@ -13,18 +13,37 @@ class AuthService {
     }
 
     public function authenticateApiRequest() {
-        $apiKey = $this->getApiKeyFromHeaders();
+        $authData = $this->getAuthFromHeaders();
 
-        if (!$apiKey) {
-            $this->logModel->warning('auth', 'Missing API Key', ['ip' => getClientIp()]);
-            errorResponse('API Key is required', 401);
+        if (!$authData) {
+            $this->logModel->warning('auth', 'Missing authentication', ['ip' => getClientIp()]);
+            errorResponse('Authentication is required', 401);
         }
 
-        $seller = $this->sellerModel->findByApiKey($apiKey);
+        $seller = null;
 
-        if (!$seller) {
-            $this->logModel->warning('auth', 'Invalid API Key', ['api_key' => $apiKey, 'ip' => getClientIp()]);
-            errorResponse('Invalid API Key', 401);
+        if (isset($authData['type']) && $authData['type'] === 'basic') {
+            $seller = $this->authenticateBasicAuth($authData['api_key'], $authData['api_secret']);
+        } else {
+            $seller = $this->sellerModel->findByApiKey($authData['api_key']);
+
+            if (!$seller) {
+                $this->logModel->warning('auth', 'Invalid API Key', ['api_key' => $authData['api_key'], 'ip' => getClientIp()]);
+                errorResponse('Invalid credentials', 401);
+            }
+
+            $signature = $this->getSignatureFromHeaders();
+            $body = file_get_contents('php://input');
+
+            if ($signature && $body) {
+                if (!verifyHmacSignature($body, $signature, $seller['api_secret'])) {
+                    $this->logModel->warning('auth', 'Invalid HMAC signature', [
+                        'seller_id' => $seller['id'],
+                        'ip' => getClientIp()
+                    ]);
+                    errorResponse('Invalid signature', 401);
+                }
+            }
         }
 
         if ($seller['status'] !== 'active') {
@@ -35,34 +54,53 @@ class AuthService {
             errorResponse('Seller account is not active', 403);
         }
 
-        $signature = $this->getSignatureFromHeaders();
-        $body = file_get_contents('php://input');
+        return $seller;
+    }
 
-        if ($signature && $body) {
-            if (!verifyHmacSignature($body, $signature, $seller['api_secret'])) {
-                $this->logModel->warning('auth', 'Invalid HMAC signature', [
-                    'seller_id' => $seller['id'],
-                    'ip' => getClientIp()
-                ]);
-                errorResponse('Invalid signature', 401);
-            }
+    private function authenticateBasicAuth($apiKey, $apiSecret) {
+        $seller = $this->sellerModel->findByApiKey($apiKey);
+
+        if (!$seller) {
+            $this->logModel->warning('auth', 'Invalid API Key in Basic Auth', ['api_key' => $apiKey, 'ip' => getClientIp()]);
+            errorResponse('Invalid credentials', 401);
+        }
+
+        if ($seller['api_secret'] !== $apiSecret) {
+            $this->logModel->warning('auth', 'Invalid API Secret in Basic Auth', [
+                'seller_id' => $seller['id'],
+                'ip' => getClientIp()
+            ]);
+            errorResponse('Invalid credentials', 401);
         }
 
         return $seller;
     }
 
-    private function getApiKeyFromHeaders() {
+    private function getAuthFromHeaders() {
         $headers = getallheaders();
-
-        if (isset($headers['X-API-Key'])) {
-            return $headers['X-API-Key'];
-        }
 
         if (isset($headers['Authorization'])) {
             $auth = $headers['Authorization'];
-            if (preg_match('/Bearer\s+(.+)/', $auth, $matches)) {
-                return $matches[1];
+
+            if (preg_match('/Basic\s+(.+)/', $auth, $matches)) {
+                $decoded = base64_decode($matches[1]);
+                if ($decoded && strpos($decoded, ':') !== false) {
+                    list($apiKey, $apiSecret) = explode(':', $decoded, 2);
+                    return [
+                        'type' => 'basic',
+                        'api_key' => $apiKey,
+                        'api_secret' => $apiSecret
+                    ];
+                }
             }
+
+            if (preg_match('/Bearer\s+(.+)/', $auth, $matches)) {
+                return ['api_key' => $matches[1]];
+            }
+        }
+
+        if (isset($headers['X-API-Key'])) {
+            return ['api_key' => $headers['X-API-Key']];
         }
 
         return null;
