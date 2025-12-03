@@ -238,6 +238,8 @@ class PodPayService {
 
         $ch = curl_init($url);
 
+        $jsonPayload = $payload ? json_encode($payload) : null;
+
         $headers = [
             'Content-Type: application/json',
             'Accept: application/json',
@@ -254,17 +256,19 @@ class PodPayService {
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_TIMEOUT => 30,
             CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_SSL_VERIFYHOST => 2
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_CUSTOMREQUEST => $method
         ]);
 
-        if ($method === 'POST') {
-            curl_setopt($ch, CURLOPT_POST, true);
-            if ($payload) {
-                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-            }
-        } elseif ($method === 'GET') {
-            curl_setopt($ch, CURLOPT_HTTPGET, true);
+        if ($method === 'POST' && $jsonPayload) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonPayload);
         }
+
+        $this->logModel->info('podpay', 'Sending request', [
+            'url' => $url,
+            'method' => $method,
+            'payload' => $payload
+        ]);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -273,6 +277,10 @@ class PodPayService {
         curl_close($ch);
 
         if ($error) {
+            $this->logModel->error('podpay', 'cURL error', [
+                'error' => $error,
+                'url' => $url
+            ]);
             throw new Exception("cURL Error: {$error}");
         }
 
@@ -282,10 +290,19 @@ class PodPayService {
                 $decoded = json_decode($response, true);
                 if (isset($decoded['message'])) {
                     $errorMessage .= ": " . $decoded['message'];
+                } elseif (isset($decoded['error'])) {
+                    $errorMessage .= ": " . $decoded['error'];
                 } else {
-                    $errorMessage .= ": " . $response;
+                    $errorMessage .= ": " . substr($response, 0, 200);
                 }
             }
+
+            $this->logModel->error('podpay', 'HTTP error response', [
+                'http_code' => $httpCode,
+                'response' => $response,
+                'url' => $url
+            ]);
+
             throw new Exception($errorMessage);
         }
 

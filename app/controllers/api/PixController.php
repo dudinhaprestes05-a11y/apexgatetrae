@@ -116,7 +116,12 @@ class PixController {
             'amount' => $amount,
             'pix_type' => $cashinData['pix_type'],
             'expires_at' => date('Y-m-d H:i:s', strtotime("+{$cashinData['expires_in_minutes']} minutes")),
-            'metadata' => $input['metadata'] ?? []
+            'metadata' => $input['metadata'] ?? [],
+            'customer' => [
+                'name' => $input['customer']['name'] ?? $seller['name'],
+                'email' => $input['customer']['email'] ?? $seller['email'],
+                'document' => $input['customer']['document'] ?? $seller['document']
+            ]
         ];
 
         $acquirerResponse = $this->acquirerService->createPixCashin($acquirer, $acquirerData);
