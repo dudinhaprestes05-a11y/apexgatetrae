@@ -19,21 +19,34 @@ CREATE TABLE IF NOT EXISTS `sellers` (
   `name` VARCHAR(255) NOT NULL,
   `email` VARCHAR(255) NOT NULL UNIQUE,
   `document` VARCHAR(14) NOT NULL UNIQUE COMMENT 'CPF ou CNPJ',
-  `api_key` VARCHAR(64) NOT NULL UNIQUE,
-  `api_secret` VARCHAR(128) NOT NULL COMMENT 'Para HMAC',
+  `phone` VARCHAR(20) DEFAULT NULL,
+  `person_type` ENUM('individual', 'business') NOT NULL COMMENT 'Pessoa física ou jurídica',
+  `company_name` VARCHAR(255) DEFAULT NULL COMMENT 'Razão social se PJ',
+  `trading_name` VARCHAR(255) DEFAULT NULL COMMENT 'Nome fantasia',
+  `monthly_revenue` DECIMAL(15,2) DEFAULT NULL COMMENT 'Faturamento mensal',
+  `average_ticket` DECIMAL(15,2) DEFAULT NULL COMMENT 'Ticket médio',
+  `api_key` VARCHAR(64) DEFAULT NULL UNIQUE,
+  `api_secret` VARCHAR(128) DEFAULT NULL COMMENT 'Para HMAC',
   `webhook_url` VARCHAR(500) DEFAULT NULL,
   `webhook_secret` VARCHAR(128) DEFAULT NULL,
-  `status` ENUM('active', 'inactive', 'blocked') DEFAULT 'active',
+  `status` ENUM('pending', 'active', 'inactive', 'blocked', 'rejected') DEFAULT 'pending',
+  `document_status` ENUM('pending', 'under_review', 'approved', 'rejected') DEFAULT 'pending',
+  `approval_notes` TEXT DEFAULT NULL,
+  `approved_by` INT UNSIGNED DEFAULT NULL,
+  `approved_at` TIMESTAMP NULL,
   `balance` DECIMAL(15,2) DEFAULT 0.00,
   `daily_limit` DECIMAL(15,2) DEFAULT 50000.00,
   `daily_used` DECIMAL(15,2) DEFAULT 0.00,
-  `daily_reset_at` DATE NOT NULL,
-  `fee_percentage` DECIMAL(5,4) DEFAULT 0.0099 COMMENT 'Taxa padrão 0.99%',
-  `fee_fixed` DECIMAL(10,2) DEFAULT 0.00,
+  `daily_reset_at` DATE DEFAULT NULL,
+  `fee_percentage_cashin` DECIMAL(5,4) DEFAULT 0.0099 COMMENT 'Taxa cash-in 0.99%',
+  `fee_fixed_cashin` DECIMAL(10,2) DEFAULT 0.00,
+  `fee_percentage_cashout` DECIMAL(5,4) DEFAULT 0.0199 COMMENT 'Taxa cash-out 1.99%',
+  `fee_fixed_cashout` DECIMAL(10,2) DEFAULT 0.00,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_api_key` (`api_key`),
   INDEX `idx_status` (`status`),
+  INDEX `idx_document_status` (`document_status`),
   INDEX `idx_daily_reset` (`daily_reset_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -239,10 +252,50 @@ CREATE TABLE IF NOT EXISTS `rate_limits` (
   INDEX `idx_window_end` (`window_end`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `seller_documents` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `seller_id` INT UNSIGNED NOT NULL,
+  `document_type` ENUM('rg_front', 'rg_back', 'cnh_front', 'cnh_back', 'cpf', 'selfie', 'proof_address', 'social_contract', 'cnpj', 'partner_docs') NOT NULL,
+  `file_name` VARCHAR(255) NOT NULL,
+  `file_path` VARCHAR(500) NOT NULL,
+  `file_size` INT UNSIGNED NOT NULL COMMENT 'Tamanho em bytes',
+  `mime_type` VARCHAR(100) NOT NULL,
+  `status` ENUM('pending', 'under_review', 'approved', 'rejected') DEFAULT 'pending',
+  `reviewed_by` INT UNSIGNED DEFAULT NULL COMMENT 'ID do admin que revisou',
+  `reviewed_at` TIMESTAMP NULL,
+  `rejection_reason` TEXT DEFAULT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`seller_id`) REFERENCES `sellers`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`reviewed_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+  INDEX `idx_seller_id` (`seller_id`),
+  INDEX `idx_status` (`status`),
+  INDEX `idx_document_type` (`document_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `notifications` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT UNSIGNED DEFAULT NULL,
+  `seller_id` INT UNSIGNED DEFAULT NULL,
+  `type` ENUM('info', 'success', 'warning', 'error', 'document_rejected', 'document_approved', 'account_approved', 'account_rejected') NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `message` TEXT NOT NULL,
+  `link` VARCHAR(500) DEFAULT NULL,
+  `is_read` TINYINT(1) DEFAULT 0,
+  `read_at` TIMESTAMP NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`seller_id`) REFERENCES `sellers`(`id`) ON DELETE CASCADE,
+  INDEX `idx_user_id` (`user_id`),
+  INDEX `idx_seller_id` (`seller_id`),
+  INDEX `idx_is_read` (`is_read`),
+  INDEX `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Dados iniciais
 
-INSERT INTO `sellers` (`name`, `email`, `document`, `api_key`, `api_secret`, `status`, `balance`, `daily_limit`, `daily_reset_at`, `fee_percentage`) VALUES
-('Seller Demo', 'seller@demo.com', '12345678000190', 'sk_test_demo_key_123456789', SHA2('demo_secret_key_987654321', 256), 'active', 0.00, 50000.00, CURDATE(), 0.0099);
+INSERT INTO `sellers` (`name`, `email`, `document`, `phone`, `person_type`, `company_name`, `api_key`, `api_secret`, `status`, `document_status`, `approved_at`, `balance`, `daily_limit`, `daily_reset_at`, `fee_percentage_cashin`, `fee_percentage_cashout`) VALUES
+('Seller Demo', 'seller@demo.com', '12345678000190', '11999999999', 'business', 'Empresa Demo LTDA', 'sk_test_demo_key_123456789', SHA2('demo_secret_key_987654321', 256), 'active', 'approved', NOW(), 0.00, 50000.00, CURDATE(), 0.0099, 0.0199);
 
 INSERT INTO `users` (`seller_id`, `name`, `email`, `password`, `role`, `status`) VALUES
 (NULL, 'Admin System', 'admin@gateway.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'active'),
