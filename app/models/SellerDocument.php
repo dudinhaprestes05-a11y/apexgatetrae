@@ -93,7 +93,7 @@ class SellerDocument extends BaseModel {
         if ($personType === 'individual') {
             return ['rg_front', 'rg_back', 'cpf', 'selfie', 'proof_address'];
         } else {
-            return ['social_contract', 'cnpj', 'partner_docs', 'proof_address'];
+            return ['rg_front', 'rg_back', 'selfie', 'social_contract', 'cnpj', 'partner_docs', 'proof_address'];
         }
     }
 

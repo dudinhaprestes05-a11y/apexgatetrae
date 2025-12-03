@@ -3,12 +3,12 @@ $pageTitle = 'Documentos';
 require_once __DIR__ . '/../layouts/header.php';
 
 $docLabels = [
-    'rg_front' => 'RG - Frente',
-    'rg_back' => 'RG - Verso',
+    'rg_front' => $seller['person_type'] === 'legal' ? 'RG Representante - Frente' : 'RG - Frente',
+    'rg_back' => $seller['person_type'] === 'legal' ? 'RG Representante - Verso' : 'RG - Verso',
     'cnh_front' => 'CNH - Frente',
     'cnh_back' => 'CNH - Verso',
     'cpf' => 'CPF',
-    'selfie' => 'Selfie com Documento',
+    'selfie' => $seller['person_type'] === 'legal' ? 'Selfie do Representante com Documento' : 'Selfie com Documento',
     'proof_address' => 'Comprovante de Endereço',
     'social_contract' => 'Contrato Social',
     'cnpj' => 'Cartão CNPJ',
@@ -33,7 +33,12 @@ foreach ($documents as $doc) {
             <i class="fas fa-info-circle text-blue-600 text-xl mr-3"></i>
             <div>
                 <h3 class="font-semibold text-blue-900">Envie seus documentos</h3>
-                <p class="text-blue-700 text-sm mt-1">Para ativar sua conta, precisamos validar seus documentos. Envie fotos claras e legíveis.</p>
+                <p class="text-blue-700 text-sm mt-1">
+                    Para ativar sua conta, precisamos validar seus documentos. Envie fotos claras e legíveis.
+                    <?php if ($seller['person_type'] === 'legal'): ?>
+                    <br><strong>Pessoa Jurídica:</strong> Envie os documentos pessoais do representante legal da empresa (RG frente, verso e selfie com documento).
+                    <?php endif; ?>
+                </p>
             </div>
         </div>
     </div>

@@ -2,6 +2,19 @@
 $pageTitle = 'Documentos';
 require_once __DIR__ . '/../layouts/header.php';
 $status = $_GET['status'] ?? 'pending';
+
+$docLabels = [
+    'rg_front' => 'RG/Doc Representante - Frente',
+    'rg_back' => 'RG/Doc Representante - Verso',
+    'cnh_front' => 'CNH - Frente',
+    'cnh_back' => 'CNH - Verso',
+    'cpf' => 'CPF',
+    'selfie' => 'Selfie com Documento',
+    'proof_address' => 'Comprovante de Endereço',
+    'social_contract' => 'Contrato Social',
+    'cnpj' => 'Cartão CNPJ',
+    'partner_docs' => 'Documentos dos Sócios'
+];
 ?>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -37,7 +50,7 @@ $status = $_GET['status'] ?? 'pending';
         <?php foreach ($documentsWithSeller as $doc): ?>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover-lift">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="font-semibold text-gray-900"><?= ucfirst(str_replace('_', ' ', $doc['document_type'])) ?></h3>
+                <h3 class="font-semibold text-gray-900"><?= $docLabels[$doc['document_type']] ?? ucfirst(str_replace('_', ' ', $doc['document_type'])) ?></h3>
                 <span class="px-2 py-1 text-xs font-medium rounded-full
                     <?php
                     echo match($doc['status']) {
