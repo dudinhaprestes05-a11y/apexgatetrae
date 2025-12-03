@@ -220,13 +220,60 @@ $statusColors = [
                     </div>
                 </div>
 
+                <!-- Configuração de Retenção -->
+                <div class="p-4 bg-slate-800 bg-opacity-50 rounded-lg border border-slate-700 mt-6">
+                    <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
+                        <i class="fas fa-hand-holding-usd text-yellow-500 mr-2"></i>
+                        Retenção de Valores
+                    </h4>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
+                            <span class="text-white text-sm">Reter Saldo</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="balance_retention" value="1" <?= $seller['balance_retention'] ? 'checked' : '' ?> class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-600"></div>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">
+                                % Retenção do Faturamento
+                            </label>
+                            <div class="relative">
+                                <input type="number"
+                                       name="revenue_retention_percentage"
+                                       value="<?= $seller['revenue_retention_percentage'] ?>"
+                                       step="0.01"
+                                       min="0"
+                                       max="100"
+                                       class="w-full px-4 py-2.5 pr-10">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">%</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">0% = sem retenção | Atual: <?= number_format($seller['revenue_retention_percentage'], 2) ?>%</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Motivo da Retenção</label>
+                            <textarea name="retention_reason" rows="2" class="w-full px-4 py-2.5" placeholder="Descreva o motivo da retenção..."><?= htmlspecialchars($seller['retention_reason'] ?? '') ?></textarea>
+                        </div>
+                        <?php if ($seller['balance_retention'] || $seller['revenue_retention_percentage'] > 0): ?>
+                        <div class="bg-yellow-900/20 border border-yellow-700 rounded-lg p-3">
+                            <p class="text-yellow-400 text-xs font-medium mb-1">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>Retenção Ativa
+                            </p>
+                            <?php if ($seller['retention_started_at']): ?>
+                            <p class="text-yellow-300 text-xs">Iniciada em: <?= date('d/m/Y H:i', strtotime($seller['retention_started_at'])) ?></p>
+                            <?php endif; ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
                 <div class="flex items-center justify-between pt-4 border-t border-slate-700">
                     <div class="text-sm text-slate-400">
                         <i class="fas fa-info-circle mr-1"></i>
-                        As taxas são aplicadas automaticamente em todas as transações
+                        As taxas e retenções são aplicadas automaticamente
                     </div>
                     <button type="submit" class="btn-primary px-6 py-2.5 rounded-lg font-medium">
-                        <i class="fas fa-save mr-2"></i>Salvar Taxas
+                        <i class="fas fa-save mr-2"></i>Salvar Configurações
                     </button>
                 </div>
             </form>
@@ -397,26 +444,9 @@ $statusColors = [
                 </form>
             </div>
             <?php else: ?>
-            <button onclick="openBlockModal()" class="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition mb-4">
+            <button onclick="openBlockModal()" class="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition">
                 <i class="fas fa-ban mr-1"></i>Bloquear Seller
             </button>
-            <?php endif; ?>
-
-            <!-- Retenção -->
-            <button onclick="openRetentionModal()" class="w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded text-sm transition">
-                <i class="fas fa-hand-holding-usd mr-1"></i>Configurar Retenção
-            </button>
-
-            <?php if ($seller['balance_retention'] || $seller['revenue_retention_percentage'] > 0): ?>
-            <div class="bg-yellow-900/20 border border-yellow-700 rounded-lg p-3 mt-3">
-                <p class="text-yellow-400 text-xs font-medium mb-1">Retenção Ativa:</p>
-                <?php if ($seller['balance_retention']): ?>
-                <p class="text-yellow-300 text-xs">• Saldo retido</p>
-                <?php endif; ?>
-                <?php if ($seller['revenue_retention_percentage'] > 0): ?>
-                <p class="text-yellow-300 text-xs">• <?= $seller['revenue_retention_percentage'] ?>% do faturamento</p>
-                <?php endif; ?>
-            </div>
             <?php endif; ?>
         </div>
 
@@ -562,58 +592,6 @@ $statusColors = [
     </div>
 </div>
 
-<!-- Modal Retenção -->
-<div id="retentionModal" class="modal hidden">
-    <div class="modal-content max-w-md">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-2xl font-bold text-white">Configurar Retenção</h3>
-            <button onclick="closeRetentionModal()" class="text-slate-400 hover:text-white">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <form method="POST" action="/admin/sellers/<?= $seller['id'] ?>/update-retention">
-            <div class="space-y-4">
-                <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
-                    <span class="text-white text-sm">Reter Saldo</span>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="balance_retention" value="1" <?= $seller['balance_retention'] ? 'checked' : '' ?> class="sr-only peer">
-                        <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-600"></div>
-                    </label>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">
-                        % Retenção do Faturamento
-                    </label>
-                    <div class="relative">
-                        <input type="number"
-                               name="revenue_retention_percentage"
-                               value="<?= $seller['revenue_retention_percentage'] ?>"
-                               step="0.01"
-                               min="0"
-                               max="100"
-                               class="w-full px-4 py-2.5 pr-10"
-                               required>
-                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">%</span>
-                    </div>
-                    <p class="text-xs text-slate-500 mt-1">0% = sem retenção</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Motivo</label>
-                    <textarea name="retention_reason" rows="3" class="w-full px-4 py-2.5" placeholder="Descreva o motivo da retenção..."><?= htmlspecialchars($seller['retention_reason'] ?? '') ?></textarea>
-                </div>
-            </div>
-            <div class="flex items-center justify-end space-x-3 mt-6">
-                <button type="button" onclick="closeRetentionModal()" class="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition">
-                    Cancelar
-                </button>
-                <button type="submit" class="px-6 py-2.5 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition">
-                    <i class="fas fa-save mr-2"></i>Salvar
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <!-- Modal Visualizar Documento -->
 <div id="documentModal" class="modal hidden">
     <div class="modal-content max-w-4xl">
@@ -661,16 +639,6 @@ function openBlockModal() {
 function closeBlockModal() {
     document.getElementById('blockModal').classList.add('hidden');
     document.getElementById('blockModal').classList.remove('flex');
-}
-
-function openRetentionModal() {
-    document.getElementById('retentionModal').classList.remove('hidden');
-    document.getElementById('retentionModal').classList.add('flex');
-}
-
-function closeRetentionModal() {
-    document.getElementById('retentionModal').classList.add('hidden');
-    document.getElementById('retentionModal').classList.remove('flex');
 }
 
 function viewDocument(docId, filePath, docName) {

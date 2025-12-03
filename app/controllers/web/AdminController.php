@@ -92,7 +92,7 @@ class AdminController {
             $this->cashoutModel->getRecentBySeller($sellerId, 5)
         );
 
-        $requiredDocs = ['rg', 'cpf', 'proof_address', 'selfie'];
+        $requiredDocs = ['rg', 'cpf', 'selfie'];
         $missingDocs = [];
         $existingDocTypes = array_column($documents, 'document_type');
 
@@ -597,6 +597,10 @@ class AdminController {
         $feePercentageCashout = floatval($_POST['fee_percentage_cashout'] ?? 0);
         $feeFixedCashout = floatval($_POST['fee_fixed_cashout'] ?? 0);
 
+        $balanceRetention = isset($_POST['balance_retention']) ? 1 : 0;
+        $revenueRetentionPercentage = floatval($_POST['revenue_retention_percentage'] ?? 0);
+        $retentionReason = $_POST['retention_reason'] ?? '';
+
         if ($feePercentageCashin < 0 || $feePercentageCashin > 15) {
             $_SESSION['error'] = 'Taxa percentual de cash-in deve estar entre 0% e 15%';
             header('Location: /admin/sellers/view/' . $sellerId);
@@ -609,29 +613,52 @@ class AdminController {
             exit;
         }
 
-        $this->sellerModel->update($sellerId, [
+        if ($revenueRetentionPercentage < 0 || $revenueRetentionPercentage > 100) {
+            $_SESSION['error'] = 'Percentual de retenção deve estar entre 0% e 100%';
+            header('Location: /admin/sellers/view/' . $sellerId);
+            exit;
+        }
+
+        $updateData = [
             'fee_percentage_cashin' => $feePercentageCashin,
             'fee_fixed_cashin' => $feeFixedCashin,
             'fee_percentage_cashout' => $feePercentageCashout,
-            'fee_fixed_cashout' => $feeFixedCashout
-        ]);
+            'fee_fixed_cashout' => $feeFixedCashout,
+            'balance_retention' => $balanceRetention,
+            'revenue_retention_percentage' => $revenueRetentionPercentage,
+            'retention_reason' => $retentionReason
+        ];
+
+        if ($balanceRetention || $revenueRetentionPercentage > 0) {
+            if (!$seller['retention_started_at']) {
+                $updateData['retention_started_at'] = date('Y-m-d H:i:s');
+                $updateData['retention_started_by'] = $_SESSION['user_id'];
+            }
+        } else {
+            $updateData['retention_started_at'] = null;
+            $updateData['retention_started_by'] = null;
+        }
+
+        $this->sellerModel->update($sellerId, $updateData);
 
         $this->logModel->create([
             'level' => 'info',
             'category' => 'admin',
-            'message' => 'Taxas atualizadas para seller ID ' . $sellerId,
+            'message' => 'Taxas e retenção atualizadas para seller ID ' . $sellerId,
             'context' => json_encode([
                 'seller_id' => $sellerId,
                 'fee_percentage_cashin' => $feePercentageCashin,
                 'fee_fixed_cashin' => $feeFixedCashin,
                 'fee_percentage_cashout' => $feePercentageCashout,
                 'fee_fixed_cashout' => $feeFixedCashout,
+                'balance_retention' => $balanceRetention,
+                'revenue_retention_percentage' => $revenueRetentionPercentage,
                 'updated_by' => $_SESSION['user_id']
             ]),
             'user_id' => $_SESSION['user_id']
         ]);
 
-        $_SESSION['success'] = 'Taxas atualizadas com sucesso!';
+        $_SESSION['success'] = 'Configurações atualizadas com sucesso!';
         header('Location: /admin/sellers/view/' . $sellerId);
         exit;
     }
@@ -854,60 +881,4 @@ class AdminController {
         exit;
     }
 
-    public function updateRetention($sellerId) {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /admin/sellers/view/' . $sellerId);
-            exit;
-        }
-
-        $seller = $this->sellerModel->find($sellerId);
-        if (!$seller) {
-            $_SESSION['error'] = 'Seller não encontrado';
-            header('Location: /admin/sellers');
-            exit;
-        }
-
-        $balanceRetention = isset($_POST['balance_retention']) ? 1 : 0;
-        $revenueRetentionPercentage = floatval($_POST['revenue_retention_percentage'] ?? 0);
-        $retentionReason = $_POST['retention_reason'] ?? '';
-
-        if ($revenueRetentionPercentage < 0 || $revenueRetentionPercentage > 100) {
-            $_SESSION['error'] = 'Percentual de retenção deve estar entre 0% e 100%';
-            header('Location: /admin/sellers/view/' . $sellerId);
-            exit;
-        }
-
-        $updateData = [
-            'balance_retention' => $balanceRetention,
-            'revenue_retention_percentage' => $revenueRetentionPercentage,
-            'retention_reason' => $retentionReason
-        ];
-
-        if ($balanceRetention || $revenueRetentionPercentage > 0) {
-            $updateData['retention_started_at'] = date('Y-m-d H:i:s');
-            $updateData['retention_started_by'] = $_SESSION['user_id'];
-        } else {
-            $updateData['retention_started_at'] = null;
-            $updateData['retention_started_by'] = null;
-        }
-
-        $this->sellerModel->update($sellerId, $updateData);
-
-        $this->logModel->create([
-            'level' => 'info',
-            'category' => 'admin',
-            'message' => 'Configuração de retenção atualizada',
-            'context' => json_encode([
-                'seller_id' => $sellerId,
-                'balance_retention' => $balanceRetention,
-                'revenue_retention_percentage' => $revenueRetentionPercentage,
-                'retention_reason' => $retentionReason,
-                'updated_by' => $_SESSION['user_id']
-            ])
-        ]);
-
-        $_SESSION['success'] = 'Retenção atualizada com sucesso!';
-        header('Location: /admin/sellers/view/' . $sellerId);
-        exit;
-    }
 }

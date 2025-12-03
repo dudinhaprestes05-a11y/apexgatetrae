@@ -116,11 +116,11 @@ class Seller extends BaseModel {
                 COALESCE(SUM(CASE WHEN pc.status = 'paid' THEN pc.amount ELSE 0 END), 0) as total_volume,
                 COUNT(CASE WHEN pc.status = 'paid' THEN 1 END) as total_transactions,
                 COALESCE(SUM(CASE WHEN pc.status = 'paid' THEN pc.fee_amount ELSE 0 END), 0) as total_fees,
-                COALESCE(AVG(CASE WHEN pc.status = 'paid' THEN pc.fee_percentage END), 0) as avg_fee_percentage
+                s.fee_percentage_cashin as avg_fee_percentage
             FROM sellers s
             LEFT JOIN pix_cashin pc ON s.id = pc.seller_id {$dateFilter}
             WHERE s.status = 'active'
-            GROUP BY s.id, s.name, s.email
+            GROUP BY s.id, s.name, s.email, s.fee_percentage_cashin
             ORDER BY total_volume DESC
             LIMIT ?
         ";
