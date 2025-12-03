@@ -97,25 +97,14 @@ class PixController {
 
         $transactionId = generateTransactionId('CASHIN');
 
-        $cashinData = [
-            'seller_id' => $seller['id'],
-            'acquirer_id' => $acquirer['id'],
-            'transaction_id' => $transactionId,
-            'amount' => $amount,
-            'fee_amount' => $feeAmount,
-            'net_amount' => $netAmount,
-            'pix_type' => $input['pix_type'] ?? 'dynamic',
-            'metadata' => isset($input['metadata']) ? json_encode($input['metadata']) : null,
-            'expires_in_minutes' => $input['expires_in_minutes'] ?? PIX_EXPIRATION_MINUTES
-        ];
-
-        $cashinId = $this->pixCashinModel->createTransaction($cashinData);
+        $expiresInMinutes = $input['expires_in_minutes'] ?? PIX_EXPIRATION_MINUTES;
+        $pixType = $input['pix_type'] ?? 'dynamic';
 
         $acquirerData = [
             'transaction_id' => $transactionId,
             'amount' => $amount,
-            'pix_type' => $cashinData['pix_type'],
-            'expires_at' => date('Y-m-d H:i:s', strtotime("+{$cashinData['expires_in_minutes']} minutes")),
+            'pix_type' => $pixType,
+            'expires_at' => date('Y-m-d H:i:s', strtotime("+{$expiresInMinutes} minutes")),
             'metadata' => $input['metadata'] ?? [],
             'customer' => [
                 'name' => $input['customer']['name'] ?? $seller['name'],
@@ -127,8 +116,11 @@ class PixController {
         $acquirerResponse = $this->acquirerService->createPixCashin($acquirer, $acquirerData);
 
         if (!$acquirerResponse['success']) {
-            $this->pixCashinModel->updateStatus($transactionId, 'failed', [
-                'error_message' => $acquirerResponse['error']
+            $this->logModel->error('api', 'Acquirer failed to create PIX', [
+                'seller_id' => $seller['id'],
+                'transaction_id' => $transactionId,
+                'acquirer_id' => $acquirer['id'],
+                'error' => $acquirerResponse['error']
             ]);
 
             errorResponse('Failed to create PIX transaction', 500, [
@@ -136,26 +128,49 @@ class PixController {
             ]);
         }
 
-        $this->pixCashinModel->update($cashinId, [
-            'acquirer_transaction_id' => $acquirerResponse['data']['acquirer_transaction_id'] ?? null,
-            'qrcode' => $acquirerResponse['data']['qrcode'] ?? null,
-            'qrcode_base64' => $acquirerResponse['data']['qrcode_base64'] ?? null,
-            'pix_key' => $acquirerResponse['data']['pix_key'] ?? null
-        ]);
+        try {
+            Database::getInstance()->beginTransaction();
 
-        if (isset($input['splits']) && !empty($input['splits'])) {
-            try {
+            $cashinData = [
+                'seller_id' => $seller['id'],
+                'acquirer_id' => $acquirer['id'],
+                'transaction_id' => $transactionId,
+                'amount' => $amount,
+                'fee_amount' => $feeAmount,
+                'net_amount' => $netAmount,
+                'pix_type' => $pixType,
+                'metadata' => isset($input['metadata']) ? json_encode($input['metadata']) : null,
+                'expires_in_minutes' => $expiresInMinutes,
+                'acquirer_transaction_id' => $acquirerResponse['data']['acquirer_transaction_id'] ?? null,
+                'qrcode' => $acquirerResponse['data']['qrcode'] ?? null,
+                'qrcode_base64' => $acquirerResponse['data']['qrcode_base64'] ?? null,
+                'pix_key' => $acquirerResponse['data']['pix_key'] ?? null,
+                'status' => 'pending'
+            ];
+
+            $cashinId = $this->pixCashinModel->createTransaction($cashinData);
+
+            if (isset($input['splits']) && !empty($input['splits'])) {
                 $this->splitService->createSplits($cashinId, $netAmount, $input['splits']);
-            } catch (Exception $e) {
-                $this->logModel->error('api', 'Failed to create splits', [
-                    'transaction_id' => $transactionId,
-                    'error' => $e->getMessage()
-                ]);
             }
-        }
 
-        $this->sellerModel->incrementDailyUsed($seller['id'], $amount);
-        $this->acquirerModel->incrementDailyUsed($acquirer['id'], $amount);
+            $this->sellerModel->incrementDailyUsed($seller['id'], $amount);
+            $this->acquirerModel->incrementDailyUsed($acquirer['id'], $amount);
+
+            Database::getInstance()->commit();
+
+        } catch (Exception $e) {
+            Database::getInstance()->rollback();
+
+            $this->logModel->error('api', 'Failed to save transaction', [
+                'transaction_id' => $transactionId,
+                'error' => $e->getMessage()
+            ]);
+
+            errorResponse('Failed to save transaction', 500, [
+                'error' => $e->getMessage()
+            ]);
+        }
 
         $this->logModel->info('api', 'PIX cashin created', [
             'seller_id' => $seller['id'],
