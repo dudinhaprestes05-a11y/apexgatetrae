@@ -102,11 +102,9 @@ require_once __DIR__ . '/../layouts/header.php';
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h3 class="font-bold text-gray-900 mb-4">Ações</h3>
                 <div class="space-y-3">
-                    <form method="POST" action="/admin/documents/<?= $document['id'] ?>/approve" onsubmit="return confirm('Tem certeza que deseja aprovar este documento?')">
-                        <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition">
-                            <i class="fas fa-check mr-2"></i>Aprovar Documento
-                        </button>
-                    </form>
+                    <button onclick="approveDocument(<?= $document['id'] ?>)" class="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition">
+                        <i class="fas fa-check mr-2"></i>Aprovar Documento
+                    </button>
                     <button onclick="showRejectModal()" class="w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition">
                         <i class="fas fa-times mr-2"></i>Rejeitar Documento
                     </button>
@@ -120,7 +118,7 @@ require_once __DIR__ . '/../layouts/header.php';
 <div id="rejectModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
         <h3 class="text-lg font-bold text-gray-900 mb-4">Rejeitar Documento</h3>
-        <form method="POST" action="/admin/documents/<?= $document['id'] ?>/reject">
+        <form id="rejectForm">
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Motivo da Rejeição</label>
                 <textarea name="reason" required rows="4"
@@ -140,6 +138,8 @@ require_once __DIR__ . '/../layouts/header.php';
 </div>
 
 <script>
+const documentId = <?= $document['id'] ?>;
+
 function showRejectModal() {
     document.getElementById('rejectModal').classList.remove('hidden');
     document.getElementById('rejectModal').classList.add('flex');
@@ -148,6 +148,97 @@ function showRejectModal() {
 function hideRejectModal() {
     document.getElementById('rejectModal').classList.add('hidden');
     document.getElementById('rejectModal').classList.remove('flex');
+}
+
+function approveDocument(docId) {
+    if (!confirm('Tem certeza que deseja aprovar este documento?')) {
+        return;
+    }
+
+    const form = new FormData();
+
+    fetch(`/admin/documents/${docId}/approve`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: form
+    })
+    .then(response => {
+        if (response.ok) {
+            showSuccessMessage('Documento aprovado com sucesso!');
+            setTimeout(() => {
+                window.location.href = '/admin/documents';
+            }, 500);
+        } else {
+            showErrorMessage('Erro ao aprovar documento');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showErrorMessage('Erro ao aprovar documento');
+    });
+}
+
+document.getElementById('rejectForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch(`/admin/documents/${documentId}/reject`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            hideRejectModal();
+            showSuccessMessage('Documento rejeitado');
+            setTimeout(() => {
+                window.location.href = '/admin/documents';
+            }, 500);
+        } else {
+            showErrorMessage('Erro ao rejeitar documento');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showErrorMessage('Erro ao rejeitar documento');
+    });
+});
+
+function showSuccessMessage(message) {
+    const alert = document.createElement('div');
+    alert.className = 'fixed top-4 right-4 bg-green-50 border border-green-200 text-green-800 px-6 py-4 rounded-lg shadow-lg z-50 fade-in';
+    alert.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-3"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(alert);
+
+    setTimeout(() => {
+        alert.remove();
+    }, 3000);
+}
+
+function showErrorMessage(message) {
+    const alert = document.createElement('div');
+    alert.className = 'fixed top-4 right-4 bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg shadow-lg z-50 fade-in';
+    alert.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-circle mr-3"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(alert);
+
+    setTimeout(() => {
+        alert.remove();
+    }, 3000);
 }
 </script>
 
