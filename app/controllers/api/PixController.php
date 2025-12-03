@@ -115,10 +115,6 @@ class PixController {
             'customer' => $customerData
         ];
 
-        if (isset($input['external_id'])) {
-            $acquirerData['external_id'] = $input['external_id'];
-        }
-
         $acquirerResponse = $this->acquirerService->createPixCashin($acquirer, $acquirerData);
 
         if (!$acquirerResponse['success']) {
