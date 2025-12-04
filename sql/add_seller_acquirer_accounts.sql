@@ -46,11 +46,8 @@ CREATE TABLE IF NOT EXISTS seller_acquirer_accounts (
   UNIQUE KEY unique_seller_account (seller_id, acquirer_account_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Create indexes for performance (ignore errors if already exist)
-DROP INDEX IF EXISTS idx_seller_acquirer_accounts_seller ON seller_acquirer_accounts;
-DROP INDEX IF EXISTS idx_seller_acquirer_accounts_account ON seller_acquirer_accounts;
-DROP INDEX IF EXISTS idx_seller_acquirer_accounts_priority ON seller_acquirer_accounts;
-
-CREATE INDEX idx_seller_acquirer_accounts_seller ON seller_acquirer_accounts(seller_id);
-CREATE INDEX idx_seller_acquirer_accounts_account ON seller_acquirer_accounts(acquirer_account_id);
-CREATE INDEX idx_seller_acquirer_accounts_priority ON seller_acquirer_accounts(seller_id, priority, is_active);
+-- Create composite index for priority queries
+-- Note: seller_id and acquirer_account_id already have indexes from foreign keys
+-- If you get error about duplicate index, it means the table was already created successfully
+ALTER TABLE seller_acquirer_accounts
+ADD INDEX IF NOT EXISTS idx_seller_acquirer_accounts_priority (seller_id, priority, is_active);
