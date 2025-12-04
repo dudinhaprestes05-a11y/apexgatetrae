@@ -250,6 +250,38 @@ class PodPayService {
         }
     }
 
+    public function getAvailableBalance() {
+        try {
+            $response = $this->sendRequest('/v1/balance/available', null, 'GET');
+
+            if (isset($response['amount'])) {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'amount' => $response['amount'] / 100,
+                        'waiting_funds' => ($response['waitingFunds'] ?? 0) / 100,
+                        'max_antecipable' => ($response['maxAntecipable'] ?? 0) / 100,
+                        'reserve' => ($response['reserve'] ?? 0) / 100,
+                        'recipient_id' => $response['recipientId'] ?? null,
+                        'raw_response' => $response
+                    ]
+                ];
+            } else {
+                throw new Exception('Invalid balance response');
+            }
+
+        } catch (Exception $e) {
+            $this->logModel->error('podpay', 'Failed to get available balance', [
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
     private function sendRequest($endpoint, $payload = null, $method = 'POST', $additionalHeaders = []) {
         $url = $this->apiUrl . $endpoint;
 

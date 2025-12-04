@@ -1318,6 +1318,19 @@ class AdminController {
 
         $acquirer = $this->acquirerModel->find($account['acquirer_id']);
 
+        $apiBalance = null;
+        try {
+            require_once __DIR__ . '/../../services/PodPayService.php';
+            $podpayService = new PodPayService($account);
+            $balanceResult = $podpayService->getAvailableBalance();
+
+            if ($balanceResult['success']) {
+                $apiBalance = $balanceResult['data'];
+            }
+        } catch (Exception $e) {
+            error_log("Error fetching balance: " . $e->getMessage());
+        }
+
         $sql = "
             SELECT
                 DATE(created_at) as date,

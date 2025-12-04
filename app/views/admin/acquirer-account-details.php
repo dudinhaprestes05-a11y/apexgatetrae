@@ -67,6 +67,52 @@ require_once __DIR__ . '/../layouts/header.php';
         </div>
     </div>
 
+    <?php if ($apiBalance): ?>
+    <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl shadow-sm border-2 border-blue-300 p-6 mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-cloud text-blue-600"></i>
+                    Saldo na API PodPay
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">Saldo em tempo real na adquirente</p>
+            </div>
+            <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                <i class="fas fa-sync-alt mr-2"></i>Atualizar
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <label class="text-sm font-medium text-gray-600 block mb-1">Saldo Disponível</label>
+                <p class="text-2xl font-bold text-green-600">R$ <?= number_format($apiBalance['amount'], 2, ',', '.') ?></p>
+            </div>
+
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <label class="text-sm font-medium text-gray-600 block mb-1">Fundos em Espera</label>
+                <p class="text-2xl font-bold text-yellow-600">R$ <?= number_format($apiBalance['waiting_funds'], 2, ',', '.') ?></p>
+            </div>
+
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <label class="text-sm font-medium text-gray-600 block mb-1">Máximo Antecipável</label>
+                <p class="text-2xl font-bold text-blue-600">R$ <?= number_format($apiBalance['max_antecipable'], 2, ',', '.') ?></p>
+            </div>
+
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <label class="text-sm font-medium text-gray-600 block mb-1">Reserva</label>
+                <p class="text-2xl font-bold text-gray-600">R$ <?= number_format($apiBalance['reserve'], 2, ',', '.') ?></p>
+            </div>
+        </div>
+
+        <?php if ($apiBalance['recipient_id']): ?>
+        <div class="mt-4 bg-white rounded-lg p-3 shadow-sm">
+            <label class="text-xs font-medium text-gray-500">Recipient ID</label>
+            <p class="text-sm font-mono text-gray-900"><?= $apiBalance['recipient_id'] ?></p>
+        </div>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 class="text-lg font-bold text-gray-900 mb-4">Informações da Conta</h3>
