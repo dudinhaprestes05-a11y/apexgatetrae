@@ -146,6 +146,10 @@ try {
         $controller = new SellerController();
         $controller->processCashout();
     }
+    elseif ($uri === '/docs/api') {
+        require_once __DIR__ . '/app/views/docs/api.php';
+        exit;
+    }
     elseif ($uri === '/admin/dashboard') {
         require_once __DIR__ . '/app/controllers/web/AdminController.php';
         $controller = new AdminController();

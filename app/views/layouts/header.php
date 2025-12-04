@@ -387,6 +387,12 @@ $currentPath = $_SERVER['REQUEST_URI'];
                         <span>Credenciais API</span>
                     </a>
 
+                    <a href="/docs/api" target="_blank" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-sm text-slate-300 hover:text-blue-400">
+                        <i class="fas fa-book w-5"></i>
+                        <span>Documentação API</span>
+                        <i class="fas fa-external-link-alt text-xs ml-auto"></i>
+                    </a>
+
                     <a href="/seller/ip-whitelist" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-sm <?= strpos($currentPath, '/seller/ip-whitelist') !== false ? 'active' : 'text-slate-300' ?>">
                         <i class="fas fa-shield-alt w-5"></i>
                         <span>Whitelist de IPs</span>

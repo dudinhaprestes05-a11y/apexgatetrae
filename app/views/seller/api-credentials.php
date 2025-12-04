@@ -12,6 +12,22 @@ unset($_SESSION['new_api_secret']);
         <p class="text-sm md:text-base text-gray-600 mt-2">Use essas credenciais para integrar com nossa API</p>
     </div>
 
+    <div class="mb-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-start justify-between">
+            <div class="flex items-start">
+                <i class="fas fa-book text-blue-600 text-2xl mr-3 mt-1"></i>
+                <div>
+                    <h3 class="font-semibold text-blue-900">Precisa de ajuda com a integração?</h3>
+                    <p class="text-blue-700 text-sm mt-1">Acesse nossa documentação completa com exemplos de código, endpoints e webhooks.</p>
+                </div>
+            </div>
+            <a href="/docs/api" target="_blank" class="flex-shrink-0 ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm flex items-center space-x-2">
+                <span>Ver Documentação</span>
+                <i class="fas fa-external-link-alt text-xs"></i>
+            </a>
+        </div>
+    </div>
+
     <?php if ($newApiSecret): ?>
     <div class="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
         <div class="flex items-start">
