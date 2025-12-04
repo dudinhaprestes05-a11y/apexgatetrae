@@ -15,8 +15,8 @@ require_once __DIR__ . '/../layouts/header.php';
             <div class="flex-1">
                 <h3 class="font-semibold text-yellow-900">Segurança Adicional - Ativa por Padrão</h3>
                 <p class="text-yellow-700 text-sm mt-1">
-                    A whitelist de IPs está ativa por padrão. Quando não há IPs cadastrados, todos os IPs são permitidos.
-                    Ao adicionar IPs, apenas os endereços cadastrados terão acesso. Você pode desativar a qualquer momento.
+                    A whitelist de IPs está ativa por padrão. Quando ativa e sem IPs cadastrados, <strong>TODOS os acessos são bloqueados</strong>.
+                    Adicione seus IPs autorizados ou desative a whitelist para permitir acesso à API.
                 </p>
             </div>
         </div>
@@ -108,13 +108,13 @@ require_once __DIR__ . '/../layouts/header.php';
             <i class="fas fa-info-circle mr-2"></i>Informações Importantes
         </h2>
         <ul class="space-y-2 text-blue-800 text-sm">
-            <li><i class="fas fa-check mr-2"></i>A whitelist está ativa por padrão para todos os sellers</li>
-            <li><i class="fas fa-check mr-2"></i>Quando ativa e sem IPs cadastrados, todos os IPs são permitidos</li>
-            <li><i class="fas fa-check mr-2"></i>Ao adicionar IPs, apenas os endereços cadastrados terão acesso</li>
+            <li><i class="fas fa-shield-alt mr-2"></i>A whitelist está ativa por padrão para todos os sellers</li>
+            <li><i class="fas fa-exclamation-triangle mr-2"></i>Quando ativa e sem IPs, <strong>TODOS os acessos são bloqueados</strong></li>
+            <li><i class="fas fa-check mr-2"></i>Adicione IPs autorizados ou desative a whitelist para permitir acesso</li>
             <li><i class="fas fa-check mr-2"></i>Você pode cadastrar até 50 endereços IP</li>
             <li><i class="fas fa-check mr-2"></i>Suporta IPs individuais (ex: 192.168.1.1) e ranges CIDR (ex: 192.168.1.0/24)</li>
-            <li><i class="fas fa-info-circle mr-2"></i>Você pode desativar a whitelist para sempre permitir todos os IPs</li>
-            <li><i class="fas fa-exclamation-triangle mr-2"></i>A whitelist não afeta o acesso ao painel web, apenas à API</li>
+            <li><i class="fas fa-info-circle mr-2"></i>Desative a whitelist para sempre permitir todos os IPs</li>
+            <li><i class="fas fa-info-circle mr-2"></i>A whitelist não afeta o acesso ao painel web, apenas à API</li>
         </ul>
     </div>
 </div>

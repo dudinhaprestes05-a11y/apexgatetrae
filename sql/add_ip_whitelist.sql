@@ -12,7 +12,8 @@
   2. Features:
     - Stores IP addresses and CIDR ranges in JSON format
     - Enabled by default for enhanced security
-    - When enabled with empty whitelist, all IPs are allowed
+    - When enabled with empty whitelist, ALL IPs are BLOCKED
+    - Sellers must add IPs or disable whitelist to allow access
     - When IPs are added, only whitelisted IPs can access the API
     - Can be disabled to always allow all IPs
 

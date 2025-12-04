@@ -1,5 +1,15 @@
 # Documentação do Sistema de Whitelist de IPs
 
+## ⚠️ AVISO IMPORTANTE
+
+**A whitelist de IPs está ATIVA POR PADRÃO e BLOQUEIA TODOS os acessos quando vazia!**
+
+Ao criar um novo seller ou após aplicar a migração:
+- ✅ A whitelist estará ATIVA
+- ✅ A lista de IPs estará VAZIA
+- ⚠️ **TODOS os acessos à API serão BLOQUEADOS**
+- 🔧 **Ação necessária**: Adicione IPs autorizados OU desative a whitelist para permitir acesso
+
 ## Visão Geral
 
 O sistema de whitelist de IPs foi implementado para adicionar uma camada extra de segurança ao acesso da API. A whitelist está **ATIVA POR PADRÃO** para todos os sellers.
@@ -9,7 +19,7 @@ O sistema de whitelist de IPs foi implementado para adicionar uma camada extra d
 ### Estado Padrão (Whitelist Ativa e Vazia)
 - **Whitelist Ativa**: `ip_whitelist_enabled = 1` (padrão)
 - **Whitelist Vazia**: `ip_whitelist = []`
-- **Resultado**: Todos os IPs são permitidos
+- **Resultado**: TODOS os IPs são BLOQUEADOS ⚠️
 
 ### Quando IPs São Adicionados
 - **Whitelist Ativa**: `ip_whitelist_enabled = 1`
@@ -30,7 +40,7 @@ Validar Credenciais (API Key + Secret)
 Whitelist Ativa?
     ├─ NÃO → Permitir Acesso
     └─ SIM → Whitelist Vazia?
-            ├─ SIM → Permitir Acesso
+            ├─ SIM → Bloquear (403) ⚠️
             └─ NÃO → IP na Lista?
                     ├─ SIM → Permitir Acesso
                     └─ NÃO → Bloquear (403)
@@ -168,8 +178,8 @@ fetch('/seller/ip-whitelist/toggle', {
 ### Caso 1: Seller Novo (Padrão)
 1. Seller é criado
 2. Whitelist está ATIVA e VAZIA
-3. Pode acessar API de qualquer IP
-4. Quando adicionar primeiro IP, apenas ele será permitido
+3. **TODOS os acessos à API são BLOQUEADOS** ⚠️
+4. Seller precisa ADICIONAR IPs ou DESATIVAR a whitelist para permitir acesso
 
 ### Caso 2: Restringir a IPs Específicos
 1. Seller acessa `/seller/ip-whitelist`
@@ -259,7 +269,7 @@ $this->logModel->warning('auth', 'IP not whitelisted', [
 R: Não, apenas requisições à API são validadas.
 
 **P: O que acontece se a whitelist estiver ativa mas vazia?**
-R: Todos os IPs são permitidos até que o primeiro IP seja adicionado.
+R: TODOS os IPs são BLOQUEADOS. Você precisa adicionar IPs ou desativar a whitelist para permitir acesso à API.
 
 **P: Posso usar ranges CIDR?**
 R: Sim, formatos como 192.168.1.0/24 são suportados.

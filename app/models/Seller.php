@@ -205,7 +205,7 @@ class Seller extends BaseModel {
         $whitelist = $this->getIpWhitelist($sellerId);
 
         if (empty($whitelist)) {
-            return true;
+            return false;
         }
 
         foreach ($whitelist as $entry) {
