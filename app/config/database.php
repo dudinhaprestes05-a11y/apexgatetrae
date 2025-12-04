@@ -55,6 +55,22 @@ class Database {
         return $this->connection->lastInsertId();
     }
 
+    public function query($sql) {
+        return $this->connection->query($sql);
+    }
+
+    public function exec($sql) {
+        return $this->connection->exec($sql);
+    }
+
+    public function prepare($sql) {
+        return $this->connection->prepare($sql);
+    }
+
+    public function quote($value) {
+        return $this->connection->quote($value);
+    }
+
     private function __clone() {}
 
     public function __wakeup() {

@@ -8,6 +8,7 @@
  * Usage: php migrate_to_multi_account.php
  */
 
+require_once __DIR__ . '/app/config/config.php';
 require_once __DIR__ . '/app/config/database.php';
 
 class MultiAccountMigration {
