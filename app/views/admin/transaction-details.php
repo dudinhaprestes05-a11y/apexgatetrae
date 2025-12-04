@@ -62,14 +62,14 @@ require_once __DIR__ . '/../layouts/header.php';
                             <label class="text-sm font-medium text-gray-600">Criado em</label>
                             <p class="text-gray-900 mt-1"><?= date('d/m/Y H:i:s', strtotime($transaction['created_at'])) ?></p>
                         </div>
-                        <?php if ($transaction['paid_at']): ?>
+                        <?php if (isset($transaction['paid_at']) && $transaction['paid_at']): ?>
                         <div>
                             <label class="text-sm font-medium text-gray-600">Pago em</label>
                             <p class="text-gray-900 mt-1"><?= date('d/m/Y H:i:s', strtotime($transaction['paid_at'])) ?></p>
                         </div>
                         <?php endif; ?>
                     </div>
-                    <?php if ($transaction['external_id']): ?>
+                    <?php if (isset($transaction['external_id']) && $transaction['external_id']): ?>
                     <div>
                         <label class="text-sm font-medium text-gray-600">ID Externo</label>
                         <p class="text-gray-900 mt-1 font-mono text-sm break-all"><?= htmlspecialchars($transaction['external_id']) ?></p>
