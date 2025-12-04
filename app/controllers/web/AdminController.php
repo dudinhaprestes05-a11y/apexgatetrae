@@ -1279,6 +1279,92 @@ class AdminController {
         exit;
     }
 
+    public function resetAcquirerAccountLimit($accountId) {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Método não permitido']);
+            exit;
+        }
+
+        try {
+            $this->accountModel->update($accountId, [
+                'daily_used_limit' => 0,
+                'last_reset_date' => date('Y-m-d')
+            ]);
+
+            $this->logModel->info('admin', 'Limite diário resetado', [
+                'account_id' => $accountId,
+                'admin_id' => $_SESSION['user_id']
+            ]);
+
+            echo json_encode(['success' => true, 'message' => 'Limite diário resetado com sucesso!']);
+        } catch (Exception $e) {
+            error_log("Error resetting account limit: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Erro ao resetar limite: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+
+    public function viewAcquirerAccountDetails($accountId) {
+        $account = $this->accountModel->find($accountId);
+
+        if (!$account) {
+            header('Location: /admin/acquirers');
+            exit;
+        }
+
+        $acquirer = $this->acquirerModel->find($account['acquirer_id']);
+
+        $sql = "
+            SELECT
+                DATE(created_at) as date,
+                COUNT(*) as total_transactions,
+                SUM(CASE WHEN status IN ('approved', 'paid') THEN 1 ELSE 0 END) as successful_transactions,
+                SUM(CASE WHEN status IN ('approved', 'paid') THEN amount ELSE 0 END) as total_volume
+            FROM pix_cashin
+            WHERE acquirer_account_id = ?
+                AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            GROUP BY DATE(created_at)
+            ORDER BY date DESC
+        ";
+
+        $dailyStats = $this->db->query($sql, [$accountId])->fetchAll(PDO::FETCH_ASSOC);
+
+        $recentTransactionsSql = "
+            SELECT
+                pc.*,
+                s.name as seller_name,
+                s.email as seller_email
+            FROM pix_cashin pc
+            LEFT JOIN sellers s ON pc.seller_id = s.id
+            WHERE pc.acquirer_account_id = ?
+            ORDER BY pc.created_at DESC
+            LIMIT 50
+        ";
+
+        $recentTransactions = $this->db->query($recentTransactionsSql, [$accountId])->fetchAll(PDO::FETCH_ASSOC);
+
+        $statsSql = "
+            SELECT
+                COUNT(*) as total_transactions,
+                SUM(CASE WHEN status IN ('approved', 'paid') THEN 1 ELSE 0 END) as successful_transactions,
+                SUM(CASE WHEN status IN ('failed', 'cancelled', 'expired') THEN 1 ELSE 0 END) as failed_transactions,
+                SUM(CASE WHEN status IN ('approved', 'paid') THEN amount ELSE 0 END) as total_volume,
+                AVG(CASE WHEN status IN ('approved', 'paid') THEN amount ELSE NULL END) as avg_transaction_value,
+                MAX(CASE WHEN status IN ('approved', 'paid') THEN amount ELSE NULL END) as max_transaction_value,
+                MIN(CASE WHEN status IN ('approved', 'paid') THEN amount ELSE NULL END) as min_transaction_value
+            FROM pix_cashin
+            WHERE acquirer_account_id = ?
+        ";
+
+        $stats = $this->db->query($statsSql, [$accountId])->fetch(PDO::FETCH_ASSOC);
+
+        require_once __DIR__ . '/../../views/admin/acquirer-account-details.php';
+    }
+
     private function getAccountStatistics() {
         $sql = "
             SELECT

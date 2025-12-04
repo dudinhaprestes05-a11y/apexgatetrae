@@ -286,6 +286,11 @@ try {
         $controller = new AdminController();
         $controller->resetAcquirerAccountLimit($matches[1]);
     }
+    elseif (preg_match('#^/admin/acquirers/accounts/(\d+)/details$#', $uri, $matches)) {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->viewAcquirerAccountDetails($matches[1]);
+    }
     elseif (preg_match('#^/admin/sellers/(\d+)/accounts$#', $uri, $matches)) {
         require_once __DIR__ . '/app/controllers/web/AdminController.php';
         $controller = new AdminController();
