@@ -2,12 +2,15 @@
 
 Sistema completo de Gateway de Pagamentos PIX com funcionalidades avançadas de cash-in, cash-out e gerenciamento multi-seller.
 
+> 🆕 **Sistema Multi-Conta:** Agora com suporte para múltiplas contas de adquirentes, distribuição de carga e fallback automático. [Saiba mais sobre a migração](MIGRATION_TO_MULTI_ACCOUNT.md)
+
 ## Características
 
 - **PHP 8.0+ Nativo** - Sem frameworks externos
 - **Arquitetura MVC** - Código organizado e modular
 - **Multi-Seller** - Suporte a múltiplos vendedores
-- **Multi-Adquirente** - Integração com múltiplas adquirentes com fallback
+- **Multi-Conta Adquirente** - Múltiplas contas por adquirente com fallback inteligente
+- **Distribuição de Carga** - Estratégias configuráveis (prioridade, round-robin, porcentagem)
 - **API RESTful** - Endpoints completos para todas operações
 - **Sistema de Webhooks** - Fila assíncrona com retry automático
 - **Split de Pagamentos** - Divisão automática de valores
