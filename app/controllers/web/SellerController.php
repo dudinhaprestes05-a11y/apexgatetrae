@@ -97,7 +97,7 @@ class SellerController {
             exit;
         }
 
-        $allowedFields = ['webhook_url', 'webhook_secret', 'phone'];
+        $allowedFields = ['phone'];
         $updateData = [];
 
         foreach ($allowedFields as $field) {
@@ -112,6 +112,35 @@ class SellerController {
         }
 
         header('Location: /seller/profile');
+        exit;
+    }
+
+    public function webhooks() {
+        $seller = $this->sellerModel->find($this->sellerId);
+        require __DIR__ . '/../../views/seller/webhooks.php';
+    }
+
+    public function updateWebhooks() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /seller/webhooks');
+            exit;
+        }
+
+        $allowedFields = ['webhook_url', 'webhook_secret'];
+        $updateData = [];
+
+        foreach ($allowedFields as $field) {
+            if (isset($_POST[$field])) {
+                $updateData[$field] = trim($_POST[$field]);
+            }
+        }
+
+        if (!empty($updateData)) {
+            $this->sellerModel->update($this->sellerId, $updateData);
+            $_SESSION['success'] = 'Configurações de webhook atualizadas com sucesso!';
+        }
+
+        header('Location: /seller/webhooks');
         exit;
     }
 
