@@ -174,7 +174,7 @@ class AcquirerAccount extends BaseModel {
             LEFT JOIN pix_cashin pc ON pc.acquirer_account_id = aa.id
             WHERE aa.acquirer_id = ?
             GROUP BY aa.id
-            ORDER BY aa.priority ASC, aa.created_at ASC
+            ORDER BY aa.is_default DESC, aa.created_at ASC
         ";
 
         return $this->query($sql, [$acquirerId]);

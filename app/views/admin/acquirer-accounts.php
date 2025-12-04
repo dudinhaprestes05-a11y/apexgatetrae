@@ -86,22 +86,26 @@ require_once __DIR__ . '/../layouts/header.php';
                         <?php endif; ?>
                     </div>
 
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                         <div>
-                            <label class="text-sm font-medium text-gray-600">Estratégia</label>
-                            <p class="text-gray-900 mt-1 capitalize"><?= htmlspecialchars($account['load_balance_strategy']) ?></p>
+                            <label class="text-sm font-medium text-gray-600">Merchant ID</label>
+                            <p class="text-gray-900 mt-1 text-xs font-mono"><?= htmlspecialchars(substr($account['merchant_id'], 0, 20)) ?>...</p>
                         </div>
                         <div>
-                            <label class="text-sm font-medium text-gray-600">Peso</label>
-                            <p class="text-gray-900 mt-1"><?= $account['weight'] ?></p>
+                            <label class="text-sm font-medium text-gray-600">Status</label>
+                            <p class="text-gray-900 mt-1">
+                                <span class="px-2 py-1 text-xs rounded-full <?= $account['is_active'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
+                                    <?= $account['is_active'] ? 'Ativa' : 'Inativa' ?>
+                                </span>
+                            </p>
                         </div>
                         <div>
-                            <label class="text-sm font-medium text-gray-600">Max Tentativas</label>
-                            <p class="text-gray-900 mt-1"><?= $account['max_retries'] ?></p>
-                        </div>
-                        <div>
-                            <label class="text-sm font-medium text-gray-600">Prioridade</label>
-                            <p class="text-gray-900 mt-1"><?= $account['priority'] ?></p>
+                            <label class="text-sm font-medium text-gray-600">Conta Padrão</label>
+                            <p class="text-gray-900 mt-1">
+                                <span class="px-2 py-1 text-xs rounded-full <?= $account['is_default'] ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800' ?>">
+                                    <?= $account['is_default'] ? 'Sim' : 'Não' ?>
+                                </span>
+                            </p>
                         </div>
                     </div>
 
@@ -174,45 +178,20 @@ require_once __DIR__ . '/../layouts/header.php';
                     <input type="text" id="account_name" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: Conta Principal">
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">API Key *</label>
-                        <input type="text" id="account_api_key" name="api_key" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">API Secret</label>
-                        <input type="password" id="account_api_secret" name="api_secret" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Estratégia de Balanceamento *</label>
-                    <select id="account_strategy" name="load_balance_strategy" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="round_robin">Round Robin (Rotativo)</option>
-                        <option value="weighted">Weighted (Por Peso)</option>
-                        <option value="least_used">Least Used (Menos Usado)</option>
-                        <option value="random">Random (Aleatório)</option>
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1">Como as transações serão distribuídas entre as contas</p>
-                </div>
-
                 <div class="grid grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Peso *</label>
-                        <input type="number" id="account_weight" name="weight" required min="1" value="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <p class="text-xs text-gray-500 mt-1">Usado na estratégia weighted</p>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Client ID *</label>
+                        <input type="text" id="account_client_id" name="client_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Prioridade *</label>
-                        <input type="number" id="account_priority" name="priority" required min="1" value="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <p class="text-xs text-gray-500 mt-1">Menor = maior prioridade</p>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Client Secret *</label>
+                        <input type="password" id="account_client_secret" name="client_secret" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Max Tentativas *</label>
-                        <input type="number" id="account_max_retries" name="max_retries" required min="0" value="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Merchant ID *</label>
+                        <input type="text" id="account_merchant_id" name="merchant_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                 </div>
 
@@ -263,11 +242,9 @@ function editAccount(id) {
                 document.getElementById('modalTitle').textContent = 'Editar Conta';
                 document.getElementById('account_id').value = account.id;
                 document.getElementById('account_name').value = account.name;
-                document.getElementById('account_api_key').value = account.api_key || '';
-                document.getElementById('account_strategy').value = account.load_balance_strategy;
-                document.getElementById('account_weight').value = account.weight;
-                document.getElementById('account_priority').value = account.priority;
-                document.getElementById('account_max_retries').value = account.max_retries;
+                document.getElementById('account_client_id').value = account.client_id || '';
+                document.getElementById('account_client_secret').value = '';
+                document.getElementById('account_merchant_id').value = account.merchant_id || '';
                 document.getElementById('account_is_active').checked = account.is_active;
                 document.getElementById('account_is_default').checked = account.is_default;
                 document.getElementById('accountModal').classList.remove('hidden');

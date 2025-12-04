@@ -1170,13 +1170,9 @@ class AdminController {
             $data = [
                 'acquirer_id' => $_POST['acquirer_id'],
                 'name' => $_POST['name'],
-                'api_key' => $_POST['api_key'],
-                'api_secret' => $_POST['api_secret'] ?? null,
-                'load_balance_strategy' => $_POST['load_balance_strategy'],
-                'weight' => (int)$_POST['weight'],
-                'priority' => (int)$_POST['priority'],
-                'max_retries' => (int)$_POST['max_retries'],
-                'daily_limit' => $this->parseDecimal($_POST['daily_limit']),
+                'client_id' => $_POST['client_id'],
+                'client_secret' => $_POST['client_secret'],
+                'merchant_id' => $_POST['merchant_id'],
                 'is_active' => isset($_POST['is_active']) && $_POST['is_active'] === 'on',
                 'is_default' => isset($_POST['is_default']) && $_POST['is_default'] === 'on'
             ];
@@ -1223,18 +1219,14 @@ class AdminController {
 
             $data = [
                 'name' => $_POST['name'],
-                'api_key' => $_POST['api_key'],
-                'load_balance_strategy' => $_POST['load_balance_strategy'],
-                'weight' => (int)$_POST['weight'],
-                'priority' => (int)$_POST['priority'],
-                'max_retries' => (int)$_POST['max_retries'],
-                'daily_limit' => $this->parseDecimal($_POST['daily_limit']),
+                'client_id' => $_POST['client_id'],
+                'merchant_id' => $_POST['merchant_id'],
                 'is_active' => isset($_POST['is_active']) && $_POST['is_active'] === 'on',
                 'is_default' => isset($_POST['is_default']) && $_POST['is_default'] === 'on'
             ];
 
-            if (!empty($_POST['api_secret'])) {
-                $data['api_secret'] = $_POST['api_secret'];
+            if (!empty($_POST['client_secret'])) {
+                $data['client_secret'] = $_POST['client_secret'];
             }
 
             if ($data['is_default']) {
