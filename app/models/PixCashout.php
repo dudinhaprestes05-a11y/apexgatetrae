@@ -13,6 +13,21 @@ class PixCashout extends BaseModel {
         return $this->findBy('acquirer_transaction_id', $acquirerTransactionId);
     }
 
+    public function checkDuplicate($sellerId, $pixKey, $beneficiaryDocument) {
+        $sql = "
+            SELECT * FROM {$this->table}
+            WHERE seller_id = ?
+            AND (pix_key = ? OR beneficiary_document = ?)
+            AND status IN ('pending', 'processing')
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$sellerId, $pixKey, $beneficiaryDocument]);
+
+        return $stmt->fetch();
+    }
+
     public function createTransaction($data) {
         $data['transaction_id'] = generateTransactionId('CASHOUT');
         $data['status'] = 'pending';

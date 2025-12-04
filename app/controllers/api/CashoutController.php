@@ -57,10 +57,6 @@ class CashoutController {
             errorResponse('Amount must be greater than zero', 400);
         }
 
-        if ($seller['balance'] < $amount) {
-            errorResponse('Insufficient balance', 400);
-        }
-
         if (!$this->antiFraudService->validatePixKey($pixKey, $pixKeyType)) {
             errorResponse('Invalid PIX key format', 400);
         }
@@ -69,10 +65,9 @@ class CashoutController {
             errorResponse('Invalid beneficiary document', 400);
         }
 
-        $acquirer = $this->acquirerService->selectAcquirer($amount);
-
-        if (!$acquirer) {
-            errorResponse('No acquirer available at the moment', 503);
+        $duplicate = $this->pixCashoutModel->checkDuplicate($seller['id'], $pixKey, $beneficiaryDocument);
+        if ($duplicate) {
+            errorResponse('Duplicate transaction detected. There is already a pending or processing transaction with this PIX key or document', 409);
         }
 
         $settings = $this->systemSettings->getSettings();
@@ -80,32 +75,29 @@ class CashoutController {
         $feeFixed = $seller['fee_fixed_cashout'] ?? $settings['default_fee_fixed_cashout'] ?? 0;
 
         $feeAmount = calculateFee($amount, $feePercentage, $feeFixed);
-        $netAmount = $amount - $feeAmount;
+        $totalAmount = $amount + $feeAmount;
+
+        if ($seller['balance'] < $totalAmount) {
+            errorResponse('Insufficient balance. Required: ' . $totalAmount . ', Available: ' . $seller['balance'], 400);
+        }
+
+        $this->sellerModel->updateBalance($seller['id'], -$totalAmount);
+
+        $updatedSeller = $this->sellerModel->findById($seller['id']);
+
+        $acquirer = $this->acquirerService->selectAcquirer($amount);
+
+        if (!$acquirer) {
+            $this->sellerModel->updateBalance($seller['id'], $totalAmount);
+
+            errorResponse('No acquirer available at the moment', 503);
+        }
 
         $transactionId = generateTransactionId('CASHOUT');
 
-        $cashoutData = [
-            'seller_id' => $seller['id'],
-            'acquirer_id' => $acquirer['id'],
-            'transaction_id' => $transactionId,
-            'external_id' => $input['external_id'] ?? null,
-            'amount' => $amount,
-            'fee_amount' => $feeAmount,
-            'net_amount' => $netAmount,
-            'pix_key' => $pixKey,
-            'pix_key_type' => $pixKeyType,
-            'beneficiary_name' => $beneficiaryName,
-            'beneficiary_document' => $beneficiaryDocument,
-            'metadata' => isset($input['metadata']) ? json_encode($input['metadata']) : null
-        ];
-
-        $cashoutId = $this->pixCashoutModel->createTransaction($cashoutData);
-
-        $this->sellerModel->updateBalance($seller['id'], -$amount);
-
         $acquirerData = [
             'transaction_id' => $transactionId,
-            'amount' => $netAmount,
+            'amount' => $amount,
             'pix_key' => $pixKey,
             'pix_key_type' => $pixKeyType,
             'beneficiary_name' => $beneficiaryName,
@@ -115,27 +107,45 @@ class CashoutController {
         $acquirerResponse = $this->acquirerService->createPixCashout($acquirer, $acquirerData);
 
         if (!$acquirerResponse['success']) {
-            $this->pixCashoutModel->updateStatus($transactionId, 'failed', [
-                'error_message' => $acquirerResponse['error']
-            ]);
+            $this->sellerModel->updateBalance($seller['id'], $totalAmount);
 
-            $this->sellerModel->updateBalance($seller['id'], $amount);
+            $this->logModel->error('api', 'PIX cashout failed', [
+                'seller_id' => $seller['id'],
+                'transaction_id' => $transactionId,
+                'amount' => $amount,
+                'error' => $acquirerResponse['error']
+            ]);
 
             errorResponse('Failed to create cashout transaction', 500, [
                 'error' => $acquirerResponse['error']
             ]);
         }
 
-        $this->pixCashoutModel->update($cashoutId, [
+        $cashoutData = [
+            'seller_id' => $seller['id'],
+            'acquirer_id' => $acquirer['id'],
+            'transaction_id' => $transactionId,
+            'external_id' => $input['external_id'] ?? null,
+            'amount' => $amount,
+            'fee_amount' => $feeAmount,
+            'net_amount' => $amount,
+            'pix_key' => $pixKey,
+            'pix_key_type' => $pixKeyType,
+            'beneficiary_name' => $beneficiaryName,
+            'beneficiary_document' => $beneficiaryDocument,
             'acquirer_transaction_id' => $acquirerResponse['data']['acquirer_transaction_id'] ?? null,
             'end_to_end_id' => $acquirerResponse['data']['end_to_end_id'] ?? null,
-            'status' => 'processing'
-        ]);
+            'status' => 'processing',
+            'metadata' => isset($input['metadata']) ? json_encode($input['metadata']) : null
+        ];
+
+        $cashoutId = $this->pixCashoutModel->create($cashoutData);
 
         $this->logModel->info('api', 'PIX cashout created', [
             'seller_id' => $seller['id'],
             'transaction_id' => $transactionId,
-            'amount' => $amount
+            'amount' => $amount,
+            'new_balance' => $updatedSeller['balance']
         ]);
 
         $transaction = $this->pixCashoutModel->findByTransactionId($transactionId);
@@ -144,7 +154,7 @@ class CashoutController {
             'transaction_id' => $transactionId,
             'amount' => $amount,
             'fee_amount' => $feeAmount,
-            'net_amount' => $netAmount,
+            'total_charged' => $totalAmount,
             'pix_key' => $pixKey,
             'beneficiary_name' => $beneficiaryName,
             'status' => $transaction['status']
