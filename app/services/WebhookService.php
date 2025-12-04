@@ -15,7 +15,7 @@ class WebhookService {
         $this->logModel = new Log();
     }
 
-    public function enqueueWebhook($sellerId, $transactionId, $transactionType, $transactionData) {
+    public function enqueueWebhook($sellerId, $transactionId, $transactionType, $transactionData, $sendImmediately = true) {
         $seller = $this->sellerModel->find($sellerId);
 
         if (!$seller || !$seller['webhook_url']) {
@@ -48,7 +48,7 @@ class WebhookService {
 
         $webhookSecret = $seller['webhook_secret'] ?? $seller['api_secret'];
 
-        $this->webhookQueue->enqueue(
+        $webhookId = $this->webhookQueue->enqueue(
             $sellerId,
             $transactionId,
             $transactionType,
@@ -61,8 +61,34 @@ class WebhookService {
             'seller_id' => $sellerId,
             'transaction_id' => $transactionId,
             'transaction_type' => $transactionType,
-            'external_id' => $transactionData['external_id'] ?? null
+            'external_id' => $transactionData['external_id'] ?? null,
+            'webhook_id' => $webhookId
         ]);
+
+        if ($sendImmediately && $webhookId) {
+            $webhook = $this->webhookQueue->find($webhookId);
+
+            if ($webhook) {
+                $this->logModel->debug('webhook', 'Attempting immediate webhook delivery', [
+                    'webhook_id' => $webhookId,
+                    'transaction_id' => $transactionId
+                ]);
+
+                $success = $this->sendWebhook($webhook);
+
+                if ($success) {
+                    $this->logModel->info('webhook', 'Webhook sent immediately', [
+                        'webhook_id' => $webhookId,
+                        'transaction_id' => $transactionId
+                    ]);
+                } else {
+                    $this->logModel->warning('webhook', 'Immediate webhook failed, will retry via cron', [
+                        'webhook_id' => $webhookId,
+                        'transaction_id' => $transactionId
+                    ]);
+                }
+            }
+        }
 
         return true;
     }

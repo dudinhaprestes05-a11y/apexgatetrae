@@ -49,6 +49,7 @@ require_once __DIR__ . '/../layouts/header.php';
                 </h3>
                 <div class="text-sm text-gray-600 space-y-3">
                     <p>Os webhooks são notificações automáticas enviadas para sua aplicação quando eventos ocorrem.</p>
+                    <p><strong>Entrega Garantida:</strong> Tentamos enviar imediatamente. Se falhar, nosso sistema retenta automaticamente com intervalos crescentes.</p>
                     <p>Eventos notificados:</p>
                     <ul class="list-disc list-inside space-y-1 ml-2">
                         <li>Pagamento aprovado</li>
