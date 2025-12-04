@@ -11,9 +11,10 @@
 
   2. Features:
     - Stores IP addresses and CIDR ranges in JSON format
-    - When enabled, only requests from whitelisted IPs are allowed
-    - When disabled, IP validation is bypassed
-    - Default state is disabled for backward compatibility
+    - Enabled by default for enhanced security
+    - When enabled with empty whitelist, all IPs are allowed
+    - When IPs are added, only whitelisted IPs can access the API
+    - Can be disabled to always allow all IPs
 
   3. Security:
     - Adds additional layer of security for API access
@@ -24,7 +25,7 @@
 -- Add IP whitelist columns to sellers table
 ALTER TABLE sellers
 ADD COLUMN IF NOT EXISTS ip_whitelist TEXT DEFAULT '[]',
-ADD COLUMN IF NOT EXISTS ip_whitelist_enabled TINYINT(1) DEFAULT 0;
+ADD COLUMN IF NOT EXISTS ip_whitelist_enabled TINYINT(1) DEFAULT 1;
 
 -- Add index for faster queries on whitelist-enabled sellers
 CREATE INDEX IF NOT EXISTS idx_sellers_ip_whitelist_enabled

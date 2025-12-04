@@ -6,7 +6,8 @@ require_once __DIR__ . '/app/config/database.php';
 try {
     $db = db();
 
-    echo "Applying IP Whitelist Migration...\n\n";
+    echo "Applying IP Whitelist Migration...\n";
+    echo "Note: Whitelist will be ENABLED by default for all sellers\n\n";
 
     $migration = file_get_contents(__DIR__ . '/sql/add_ip_whitelist.sql');
 

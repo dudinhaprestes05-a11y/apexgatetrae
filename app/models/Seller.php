@@ -186,12 +186,6 @@ class Seller extends BaseModel {
     }
 
     public function toggleIpWhitelist($sellerId, $enabled) {
-        $whitelist = $this->getIpWhitelist($sellerId);
-
-        if ($enabled && empty($whitelist)) {
-            return ['success' => false, 'error' => 'Cannot enable whitelist with no IPs configured'];
-        }
-
         $this->update($sellerId, ['ip_whitelist_enabled' => $enabled ? 1 : 0]);
 
         return ['success' => true, 'enabled' => $enabled];
@@ -211,7 +205,7 @@ class Seller extends BaseModel {
         $whitelist = $this->getIpWhitelist($sellerId);
 
         if (empty($whitelist)) {
-            return false;
+            return true;
         }
 
         foreach ($whitelist as $entry) {
