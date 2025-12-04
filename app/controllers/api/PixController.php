@@ -92,7 +92,7 @@ class PixController {
             errorResponse('No acquirer available at the moment', 503);
         }
 
-        $feeAmount = calculateFee($amount, $seller['fee_percentage_cashin'], $seller['fee_fixed_cashin']);
+        $feeAmount = calculateFee($amount, $seller['fee_percentage_cashin'] ?? 0.0099, $seller['fee_fixed_cashin'] ?? 0);
         $netAmount = calculateNetAmount($amount, $feeAmount);
 
         $transactionId = generateTransactionId('CASHIN');

@@ -72,7 +72,7 @@ class CashoutController {
             errorResponse('No acquirer available at the moment', 503);
         }
 
-        $feeAmount = calculateFee($amount, $seller['fee_percentage'], $seller['fee_fixed']);
+        $feeAmount = calculateFee($amount, $seller['fee_percentage_cashout'] ?? 0.0199, $seller['fee_fixed_cashout'] ?? 0);
         $netAmount = $amount - $feeAmount;
 
         $transactionId = generateTransactionId('CASHOUT');
