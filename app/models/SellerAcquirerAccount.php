@@ -21,9 +21,8 @@ class SellerAcquirerAccount extends BaseModel {
                 ORDER BY saa.priority ASC, saa.id ASC";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param('i', $sellerId);
-        $stmt->execute();
-        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->execute([$sellerId]);
+        return $stmt->fetchAll();
     }
 
     public function getActiveAccountsForSeller($sellerId, $acquirerType = null) {
@@ -46,22 +45,18 @@ class SellerAcquirerAccount extends BaseModel {
                 AND saa.is_active = 1
                 AND aa.is_active = 1";
 
+        $params = [$sellerId];
+
         if ($acquirerType) {
             $sql .= " AND a.code = ?";
+            $params[] = $acquirerType;
         }
 
         $sql .= " ORDER BY saa.priority ASC, saa.id ASC";
 
         $stmt = $this->db->prepare($sql);
-
-        if ($acquirerType) {
-            $stmt->bind_param('is', $sellerId, $acquirerType);
-        } else {
-            $stmt->bind_param('i', $sellerId);
-        }
-
-        $stmt->execute();
-        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
 
     public function assignAccountToSeller($sellerId, $acquirerAccountId, $priority = 1, $isActive = true) {
@@ -74,8 +69,7 @@ class SellerAcquirerAccount extends BaseModel {
                 updated_at = CURRENT_TIMESTAMP";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param('iiii', $sellerId, $acquirerAccountId, $priority, $isActive);
-        return $stmt->execute();
+        return $stmt->execute([$sellerId, $acquirerAccountId, $priority, $isActive]);
     }
 
     public function removeAccountFromSeller($sellerId, $acquirerAccountId) {
@@ -83,8 +77,7 @@ class SellerAcquirerAccount extends BaseModel {
                 WHERE seller_id = ? AND acquirer_account_id = ?";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param('ii', $sellerId, $acquirerAccountId);
-        return $stmt->execute();
+        return $stmt->execute([$sellerId, $acquirerAccountId]);
     }
 
     public function updatePriority($id, $priority) {
@@ -99,7 +92,7 @@ class SellerAcquirerAccount extends BaseModel {
     }
 
     public function reorderPriorities($sellerId, $accountIds) {
-        $this->db->begin_transaction();
+        $this->db->beginTransaction();
 
         try {
             foreach ($accountIds as $priority => $accountId) {
@@ -109,14 +102,13 @@ class SellerAcquirerAccount extends BaseModel {
 
                 $stmt = $this->db->prepare($sql);
                 $priorityValue = $priority + 1;
-                $stmt->bind_param('iii', $priorityValue, $sellerId, $accountId);
-                $stmt->execute();
+                $stmt->execute([$priorityValue, $sellerId, $accountId]);
             }
 
             $this->db->commit();
             return true;
         } catch (Exception $e) {
-            $this->db->rollback();
+            $this->db->rollBack();
             return false;
         }
     }
@@ -127,9 +119,8 @@ class SellerAcquirerAccount extends BaseModel {
                 WHERE seller_id = ? AND is_active = 1";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param('i', $sellerId);
-        $stmt->execute();
-        $result = $stmt->get_result()->fetch_assoc();
+        $stmt->execute([$sellerId]);
+        $result = $stmt->fetch();
 
         return $result['count'] > 0;
     }
@@ -140,9 +131,8 @@ class SellerAcquirerAccount extends BaseModel {
                 WHERE seller_id = ? AND is_active = 1";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param('i', $sellerId);
-        $stmt->execute();
-        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->execute([$sellerId]);
+        $result = $stmt->fetchAll();
 
         return array_column($result, 'acquirer_account_id');
     }
