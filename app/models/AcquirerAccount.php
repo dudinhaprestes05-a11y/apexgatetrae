@@ -88,6 +88,67 @@ class AcquirerAccount extends BaseModel {
         return $result[0] ?? null;
     }
 
+    public function getNextAccountForSellerWithAmount($sellerId, $amount, $transactionType = 'cashin', $excludeAccountIds = []) {
+        $limitField = $transactionType === 'cashin' ? 'max_cashin_per_transaction' : 'max_cashout_per_transaction';
+        $minLimitField = $transactionType === 'cashin' ? 'min_cashin_per_transaction' : 'min_cashout_per_transaction';
+
+        $sql = "
+            SELECT aa.*, a.name as acquirer_name, a.code as acquirer_code,
+                   a.api_url as base_url, saa.priority, saa.distribution_strategy,
+                   saa.percentage_allocation, saa.total_transactions
+            FROM seller_acquirer_accounts saa
+            JOIN acquirer_accounts aa ON aa.id = saa.acquirer_account_id
+            JOIN acquirers a ON a.id = aa.acquirer_id
+            WHERE saa.seller_id = ?
+                AND saa.is_active = 1
+                AND aa.is_active = 1
+                AND a.status = 'active'
+                AND ? >= aa.{$minLimitField}
+                AND (aa.{$limitField} IS NULL OR ? <= aa.{$limitField})
+        ";
+
+        $params = [$sellerId, $amount, $amount];
+
+        if (!empty($excludeAccountIds)) {
+            $placeholders = implode(',', array_fill(0, count($excludeAccountIds), '?'));
+            $sql .= " AND aa.id NOT IN ({$placeholders})";
+            $params = array_merge($params, $excludeAccountIds);
+        }
+
+        $sql .= "
+            ORDER BY
+                CASE
+                    WHEN saa.distribution_strategy = 'priority_only' THEN saa.priority
+                    WHEN saa.distribution_strategy = 'least_used' THEN saa.total_transactions
+                    ELSE saa.priority
+                END ASC,
+                saa.last_used_at ASC
+            LIMIT 1
+        ";
+
+        $result = $this->query($sql, $params);
+        return $result[0] ?? null;
+    }
+
+    public function getMaxTransactionLimitForSeller($sellerId, $transactionType = 'cashin') {
+        $limitField = $transactionType === 'cashin' ? 'max_cashin_per_transaction' : 'max_cashout_per_transaction';
+
+        $sql = "
+            SELECT MAX(aa.{$limitField}) as max_limit
+            FROM seller_acquirer_accounts saa
+            JOIN acquirer_accounts aa ON aa.id = saa.acquirer_account_id
+            JOIN acquirers a ON a.id = aa.acquirer_id
+            WHERE saa.seller_id = ?
+                AND saa.is_active = 1
+                AND aa.is_active = 1
+                AND a.status = 'active'
+                AND aa.{$limitField} IS NOT NULL
+        ";
+
+        $result = $this->query($sql, [$sellerId]);
+        return $result[0]['max_limit'] ?? null;
+    }
+
     public function updateBalance($accountId, $balance) {
         return $this->execute(
             "UPDATE acquirer_accounts SET balance = ?, updated_at = NOW() WHERE id = ?",

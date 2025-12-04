@@ -39,6 +39,70 @@ class Seller extends BaseModel {
         return $this->execute($sql, [$amount, $sellerId]);
     }
 
+    public function checkDailyCashoutLimit($sellerId, $amount) {
+        $seller = $this->find($sellerId);
+
+        if (!$seller) {
+            return false;
+        }
+
+        if ($seller['cashout_daily_reset_at'] < date('Y-m-d')) {
+            $this->execute(
+                "UPDATE sellers SET cashout_daily_used = 0, cashout_daily_reset_at = ? WHERE id = ?",
+                [date('Y-m-d'), $sellerId]
+            );
+            $seller['cashout_daily_used'] = 0;
+        }
+
+        if ($seller['cashout_daily_limit'] === null) {
+            return true;
+        }
+
+        $newUsed = $seller['cashout_daily_used'] + $amount;
+
+        return $newUsed <= $seller['cashout_daily_limit'];
+    }
+
+    public function incrementDailyCashoutUsed($sellerId, $amount) {
+        $sql = "UPDATE sellers SET cashout_daily_used = cashout_daily_used + ?, updated_at = NOW() WHERE id = ?";
+        return $this->execute($sql, [$amount, $sellerId]);
+    }
+
+    public function checkTransactionLimits($sellerId, $amount, $type = 'cashin') {
+        $seller = $this->find($sellerId);
+
+        if (!$seller) {
+            return [
+                'valid' => false,
+                'error' => 'Seller não encontrado'
+            ];
+        }
+
+        $minField = $type === 'cashin' ? 'min_cashin_amount' : 'min_cashout_amount';
+        $maxField = $type === 'cashin' ? 'max_cashin_amount' : 'max_cashout_amount';
+
+        $minAmount = $seller[$minField];
+        $maxAmount = $seller[$maxField];
+
+        if ($minAmount !== null && $amount < $minAmount) {
+            return [
+                'valid' => false,
+                'error' => 'Valor abaixo do mínimo permitido',
+                'min_amount' => $minAmount
+            ];
+        }
+
+        if ($maxAmount !== null && $amount > $maxAmount) {
+            return [
+                'valid' => false,
+                'error' => 'Valor acima do máximo permitido',
+                'max_amount' => $maxAmount
+            ];
+        }
+
+        return ['valid' => true];
+    }
+
     public function getStatistics($sellerId, $startDate = null, $endDate = null) {
         $params = [$sellerId];
         $dateFilter = '';

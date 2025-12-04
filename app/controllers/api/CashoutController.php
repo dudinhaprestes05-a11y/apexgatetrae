@@ -76,6 +76,25 @@ class CashoutController {
             errorResponse('Amount must be greater than zero', 400);
         }
 
+        $limitCheck = $this->sellerModel->checkTransactionLimits($seller['id'], $amount, 'cashout');
+        if (!$limitCheck['valid']) {
+            $error = $limitCheck['error'];
+            $details = [];
+
+            if (isset($limitCheck['min_amount'])) {
+                $details['min_amount'] = $limitCheck['min_amount'];
+            }
+            if (isset($limitCheck['max_amount'])) {
+                $details['max_amount'] = $limitCheck['max_amount'];
+            }
+
+            errorResponse($error, 400, $details);
+        }
+
+        if (!$this->sellerModel->checkDailyCashoutLimit($seller['id'], $amount)) {
+            errorResponse('Limite diário de saque excedido', 403);
+        }
+
         if (!$this->antiFraudService->validatePixKey($pixKey, $pixKeyType)) {
             errorResponse('Invalid PIX key format', 400);
         }
@@ -138,6 +157,10 @@ class CashoutController {
                 'error' => $acquirerResponse['error']
             ]);
 
+            if ($acquirerResponse['account_id'] === null) {
+                errorResponse('Valor da transação excede o limite permitido', 400);
+            }
+
             errorResponse('Failed to create cashout transaction', 500, [
                 'error' => $acquirerResponse['error']
             ]);
@@ -170,6 +193,8 @@ class CashoutController {
         ];
 
         $cashoutId = $this->pixCashoutModel->create($cashoutData);
+
+        $this->sellerModel->incrementDailyCashoutUsed($seller['id'], $amount);
 
         $this->logModel->info('api', 'PIX cashout created', [
             'seller_id' => $seller['id'],

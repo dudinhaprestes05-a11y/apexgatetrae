@@ -49,31 +49,6 @@ class Acquirer extends BaseModel {
         return $stmt->fetch();
     }
 
-    public function checkDailyLimit($acquirerId, $amount) {
-        $acquirer = $this->find($acquirerId);
-
-        if (!$acquirer) {
-            return false;
-        }
-
-        if ($acquirer['daily_reset_at'] < date('Y-m-d')) {
-            $this->execute(
-                "UPDATE acquirers SET daily_used = 0, daily_reset_at = ? WHERE id = ?",
-                [date('Y-m-d'), $acquirerId]
-            );
-            $acquirer['daily_used'] = 0;
-        }
-
-        $newUsed = $acquirer['daily_used'] + $amount;
-
-        return $newUsed <= $acquirer['daily_limit'];
-    }
-
-    public function incrementDailyUsed($acquirerId, $amount) {
-        $sql = "UPDATE acquirers SET daily_used = daily_used + ?, updated_at = NOW() WHERE id = ?";
-        return $this->execute($sql, [$amount, $acquirerId]);
-    }
-
     public function updateSuccessRate($acquirerId) {
         $sql = "
             UPDATE acquirers a

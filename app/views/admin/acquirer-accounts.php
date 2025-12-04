@@ -195,6 +195,34 @@ require_once __DIR__ . '/../layouts/header.php';
                     </div>
                 </div>
 
+                <!-- Transaction Limits -->
+                <div class="border-t pt-4 mt-4">
+                    <h4 class="text-sm font-semibold text-gray-900 mb-3">Limites por Transação</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Max Cash-in (R$)</label>
+                            <input type="text" id="account_max_cashin" name="max_cashin_per_transaction" placeholder="Sem limite" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">Deixe vazio para sem limite</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Max Cash-out (R$)</label>
+                            <input type="text" id="account_max_cashout" name="max_cashout_per_transaction" placeholder="Sem limite" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">Deixe vazio para sem limite</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Min Cash-in (R$)</label>
+                            <input type="text" id="account_min_cashin" name="min_cashin_per_transaction" value="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Min Cash-out (R$)</label>
+                            <input type="text" id="account_min_cashout" name="min_cashout_per_transaction" value="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex items-center gap-4">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" id="account_is_active" name="is_active" checked class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
@@ -245,6 +273,10 @@ function editAccount(id) {
                 document.getElementById('account_client_id').value = account.client_id || '';
                 document.getElementById('account_client_secret').value = '';
                 document.getElementById('account_merchant_id').value = account.merchant_id || '';
+                document.getElementById('account_max_cashin').value = account.max_cashin_per_transaction || '';
+                document.getElementById('account_max_cashout').value = account.max_cashout_per_transaction || '';
+                document.getElementById('account_min_cashin').value = account.min_cashin_per_transaction || '0.01';
+                document.getElementById('account_min_cashout').value = account.min_cashout_per_transaction || '0.01';
                 document.getElementById('account_is_active').checked = account.is_active;
                 document.getElementById('account_is_default').checked = account.is_default;
                 document.getElementById('accountModal').classList.remove('hidden');

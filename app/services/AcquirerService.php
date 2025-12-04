@@ -312,25 +312,21 @@ class AcquirerService {
             return null;
         }
 
-        if (!$this->acquirerModel->checkDailyLimit($acquirer['id'], $amount)) {
-            $this->logModel->warning('acquirer', 'Acquirer daily limit exceeded', [
-                'acquirer_id' => $acquirer['id'],
-                'amount' => $amount
-            ]);
-
-            $excludeIds[] = $acquirer['id'];
-            return $this->selectAcquirer($amount, $excludeIds);
-        }
-
         return $acquirer;
     }
 
-    public function selectAccountForSeller($sellerId, $transactionType = 'cashin', $excludeAccountIds = []) {
-        $account = $this->accountModel->getNextAccountForSeller($sellerId, $transactionType, $excludeAccountIds);
+    public function selectAccountForSeller($sellerId, $amount, $transactionType = 'cashin', $excludeAccountIds = []) {
+        $account = $this->accountModel->getNextAccountForSellerWithAmount(
+            $sellerId,
+            $amount,
+            $transactionType,
+            $excludeAccountIds
+        );
 
         if (!$account) {
-            $this->logModel->error('acquirer', 'No available account found for seller', [
+            $this->logModel->error('acquirer', 'No available account found for seller with amount', [
                 'seller_id' => $sellerId,
+                'amount' => $amount,
                 'transaction_type' => $transactionType,
                 'excluded_ids' => $excludeAccountIds
             ]);
@@ -341,7 +337,8 @@ class AcquirerService {
             'seller_id' => $sellerId,
             'account_id' => $account['id'],
             'account_name' => $account['name'],
-            'acquirer_code' => $account['acquirer_code']
+            'acquirer_code' => $account['acquirer_code'],
+            'amount' => $amount
         ]);
 
         return $account;
@@ -352,11 +349,12 @@ class AcquirerService {
         $maxAttempts = 5;
         $attempt = 0;
         $lastError = null;
+        $amount = $data['amount'] ?? 0;
 
         while ($attempt < $maxAttempts) {
             $attempt++;
 
-            $account = $this->selectAccountForSeller($sellerId, $transactionType, $excludeAccountIds);
+            $account = $this->selectAccountForSeller($sellerId, $amount, $transactionType, $excludeAccountIds);
 
             if (!$account) {
                 $this->logModel->error('acquirer', 'No more accounts available for fallback', [

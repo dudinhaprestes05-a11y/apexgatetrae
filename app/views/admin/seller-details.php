@@ -271,6 +271,117 @@ $statusColors = [
             </form>
         </div>
 
+        <!-- Transaction Limits Configuration Card -->
+        <div class="card p-6">
+            <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                <i class="fas fa-sliders-h text-blue-500 mr-2"></i>
+                Limites de Transação
+            </h3>
+            <form method="POST" action="/admin/sellers/<?= $seller['id'] ?>/limits" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Cash-in Limits -->
+                    <div class="p-4 bg-slate-800 bg-opacity-50 rounded-lg border border-slate-700">
+                        <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
+                            <i class="fas fa-arrow-down text-green-500 mr-2"></i>
+                            Limites Cash-in
+                        </h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">
+                                    Valor Mínimo (R$)
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">R$</span>
+                                    <input type="text"
+                                           name="min_cashin_amount"
+                                           value="<?= $seller['min_cashin_amount'] ? number_format($seller['min_cashin_amount'], 2, ',', '') : '' ?>"
+                                           class="w-full px-4 py-2.5 pl-11"
+                                           placeholder="Sem limite">
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Deixe vazio para sem limite mínimo</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">
+                                    Valor Máximo (R$)
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">R$</span>
+                                    <input type="text"
+                                           name="max_cashin_amount"
+                                           value="<?= $seller['max_cashin_amount'] ? number_format($seller['max_cashin_amount'], 2, ',', '') : '' ?>"
+                                           class="w-full px-4 py-2.5 pl-11"
+                                           placeholder="Sem limite">
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Deixe vazio para sem limite máximo</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cash-out Limits -->
+                    <div class="p-4 bg-slate-800 bg-opacity-50 rounded-lg border border-slate-700">
+                        <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
+                            <i class="fas fa-arrow-up text-red-500 mr-2"></i>
+                            Limites Cash-out
+                        </h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">
+                                    Valor Mínimo (R$)
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">R$</span>
+                                    <input type="text"
+                                           name="min_cashout_amount"
+                                           value="<?= $seller['min_cashout_amount'] ? number_format($seller['min_cashout_amount'], 2, ',', '') : '' ?>"
+                                           class="w-full px-4 py-2.5 pl-11"
+                                           placeholder="Sem limite">
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Deixe vazio para sem limite mínimo</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">
+                                    Valor Máximo (R$)
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">R$</span>
+                                    <input type="text"
+                                           name="max_cashout_amount"
+                                           value="<?= $seller['max_cashout_amount'] ? number_format($seller['max_cashout_amount'], 2, ',', '') : '' ?>"
+                                           class="w-full px-4 py-2.5 pl-11"
+                                           placeholder="Sem limite">
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Deixe vazio para sem limite máximo</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">
+                                    Limite Diário (R$)
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">R$</span>
+                                    <input type="text"
+                                           name="cashout_daily_limit"
+                                           value="<?= $seller['cashout_daily_limit'] ? number_format($seller['cashout_daily_limit'], 2, ',', '') : '' ?>"
+                                           class="w-full px-4 py-2.5 pl-11"
+                                           placeholder="Sem limite">
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Deixe vazio para sem limite diário</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-4 border-t border-slate-700">
+                    <div class="text-sm text-slate-400">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Limites são validados em cada transação
+                    </div>
+                    <button type="submit" class="btn-primary px-6 py-2.5 rounded-lg font-medium">
+                        <i class="fas fa-save mr-2"></i>Salvar Limites
+                    </button>
+                </div>
+            </form>
+        </div>
+
         <!-- Processing Accounts -->
         <div class="card p-6">
             <h3 class="text-xl font-bold text-white mb-6 flex items-center justify-between">

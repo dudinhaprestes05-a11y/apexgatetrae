@@ -78,6 +78,21 @@ class PixController {
             errorResponse('Amount must be greater than zero', 400);
         }
 
+        $limitCheck = $this->sellerModel->checkTransactionLimits($seller['id'], $amount, 'cashin');
+        if (!$limitCheck['valid']) {
+            $error = $limitCheck['error'];
+            $details = [];
+
+            if (isset($limitCheck['min_amount'])) {
+                $details['min_amount'] = $limitCheck['min_amount'];
+            }
+            if (isset($limitCheck['max_amount'])) {
+                $details['max_amount'] = $limitCheck['max_amount'];
+            }
+
+            errorResponse($error, 400, $details);
+        }
+
         if (!$this->sellerModel->checkDailyLimit($seller['id'], $amount)) {
             errorResponse('Daily limit exceeded', 403);
         }
@@ -154,6 +169,10 @@ class PixController {
                 'transaction_id' => $transactionId,
                 'error' => $acquirerResponse['error']
             ]);
+
+            if ($acquirerResponse['account_id'] === null) {
+                errorResponse('Valor da transação excede o limite permitido', 400);
+            }
 
             errorResponse('Failed to create PIX transaction', 500, [
                 'error' => $acquirerResponse['error']

@@ -756,6 +756,104 @@ class AdminController {
         exit;
     }
 
+    public function updateSellerLimits($sellerId) {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/sellers/view/' . $sellerId);
+            exit;
+        }
+
+        $seller = $this->sellerModel->find($sellerId);
+
+        if (!$seller) {
+            $_SESSION['error'] = 'Seller não encontrado';
+            header('Location: /admin/sellers');
+            exit;
+        }
+
+        $minCashinAmount = isset($_POST['min_cashin_amount']) && $_POST['min_cashin_amount'] !== ''
+            ? $this->parseDecimal($_POST['min_cashin_amount']) : null;
+        $maxCashinAmount = isset($_POST['max_cashin_amount']) && $_POST['max_cashin_amount'] !== ''
+            ? $this->parseDecimal($_POST['max_cashin_amount']) : null;
+        $minCashoutAmount = isset($_POST['min_cashout_amount']) && $_POST['min_cashout_amount'] !== ''
+            ? $this->parseDecimal($_POST['min_cashout_amount']) : null;
+        $maxCashoutAmount = isset($_POST['max_cashout_amount']) && $_POST['max_cashout_amount'] !== ''
+            ? $this->parseDecimal($_POST['max_cashout_amount']) : null;
+        $cashoutDailyLimit = isset($_POST['cashout_daily_limit']) && $_POST['cashout_daily_limit'] !== ''
+            ? $this->parseDecimal($_POST['cashout_daily_limit']) : null;
+
+        if ($minCashinAmount !== null && $minCashinAmount < 0) {
+            $_SESSION['error'] = 'Valor mínimo de cash-in não pode ser negativo';
+            header('Location: /admin/sellers/view/' . $sellerId);
+            exit;
+        }
+
+        if ($maxCashinAmount !== null && $maxCashinAmount < 0) {
+            $_SESSION['error'] = 'Valor máximo de cash-in não pode ser negativo';
+            header('Location: /admin/sellers/view/' . $sellerId);
+            exit;
+        }
+
+        if ($minCashinAmount !== null && $maxCashinAmount !== null && $minCashinAmount > $maxCashinAmount) {
+            $_SESSION['error'] = 'Valor mínimo de cash-in não pode ser maior que o máximo';
+            header('Location: /admin/sellers/view/' . $sellerId);
+            exit;
+        }
+
+        if ($minCashoutAmount !== null && $minCashoutAmount < 0) {
+            $_SESSION['error'] = 'Valor mínimo de cash-out não pode ser negativo';
+            header('Location: /admin/sellers/view/' . $sellerId);
+            exit;
+        }
+
+        if ($maxCashoutAmount !== null && $maxCashoutAmount < 0) {
+            $_SESSION['error'] = 'Valor máximo de cash-out não pode ser negativo';
+            header('Location: /admin/sellers/view/' . $sellerId);
+            exit;
+        }
+
+        if ($minCashoutAmount !== null && $maxCashoutAmount !== null && $minCashoutAmount > $maxCashoutAmount) {
+            $_SESSION['error'] = 'Valor mínimo de cash-out não pode ser maior que o máximo';
+            header('Location: /admin/sellers/view/' . $sellerId);
+            exit;
+        }
+
+        if ($cashoutDailyLimit !== null && $cashoutDailyLimit < 0) {
+            $_SESSION['error'] = 'Limite diário de cash-out não pode ser negativo';
+            header('Location: /admin/sellers/view/' . $sellerId);
+            exit;
+        }
+
+        $updateData = [
+            'min_cashin_amount' => $minCashinAmount,
+            'max_cashin_amount' => $maxCashinAmount,
+            'min_cashout_amount' => $minCashoutAmount,
+            'max_cashout_amount' => $maxCashoutAmount,
+            'cashout_daily_limit' => $cashoutDailyLimit
+        ];
+
+        $this->sellerModel->update($sellerId, $updateData);
+
+        $this->logModel->create([
+            'level' => 'info',
+            'category' => 'admin',
+            'message' => 'Limites de transação atualizados para seller ID ' . $sellerId,
+            'context' => json_encode([
+                'seller_id' => $sellerId,
+                'min_cashin_amount' => $minCashinAmount,
+                'max_cashin_amount' => $maxCashinAmount,
+                'min_cashout_amount' => $minCashoutAmount,
+                'max_cashout_amount' => $maxCashoutAmount,
+                'cashout_daily_limit' => $cashoutDailyLimit,
+                'updated_by' => $_SESSION['user_id']
+            ]),
+            'user_id' => $_SESSION['user_id']
+        ]);
+
+        $_SESSION['success'] = 'Limites atualizados com sucesso!';
+        header('Location: /admin/sellers/view/' . $sellerId);
+        exit;
+    }
+
     public function reports() {
         $period = $_GET['period'] ?? '7days';
 
@@ -1174,7 +1272,15 @@ class AdminController {
                 'client_secret' => $_POST['client_secret'],
                 'merchant_id' => $_POST['merchant_id'],
                 'is_active' => isset($_POST['is_active']) && $_POST['is_active'] === 'on',
-                'is_default' => isset($_POST['is_default']) && $_POST['is_default'] === 'on'
+                'is_default' => isset($_POST['is_default']) && $_POST['is_default'] === 'on',
+                'max_cashin_per_transaction' => isset($_POST['max_cashin_per_transaction']) && $_POST['max_cashin_per_transaction'] !== ''
+                    ? $this->parseDecimal($_POST['max_cashin_per_transaction']) : null,
+                'max_cashout_per_transaction' => isset($_POST['max_cashout_per_transaction']) && $_POST['max_cashout_per_transaction'] !== ''
+                    ? $this->parseDecimal($_POST['max_cashout_per_transaction']) : null,
+                'min_cashin_per_transaction' => isset($_POST['min_cashin_per_transaction']) && $_POST['min_cashin_per_transaction'] !== ''
+                    ? $this->parseDecimal($_POST['min_cashin_per_transaction']) : 0.01,
+                'min_cashout_per_transaction' => isset($_POST['min_cashout_per_transaction']) && $_POST['min_cashout_per_transaction'] !== ''
+                    ? $this->parseDecimal($_POST['min_cashout_per_transaction']) : 0.01
             ];
 
             if ($data['is_default']) {
@@ -1227,6 +1333,26 @@ class AdminController {
 
             if (!empty($_POST['client_secret'])) {
                 $data['client_secret'] = $_POST['client_secret'];
+            }
+
+            if (isset($_POST['max_cashin_per_transaction'])) {
+                $data['max_cashin_per_transaction'] = $_POST['max_cashin_per_transaction'] !== ''
+                    ? $this->parseDecimal($_POST['max_cashin_per_transaction']) : null;
+            }
+
+            if (isset($_POST['max_cashout_per_transaction'])) {
+                $data['max_cashout_per_transaction'] = $_POST['max_cashout_per_transaction'] !== ''
+                    ? $this->parseDecimal($_POST['max_cashout_per_transaction']) : null;
+            }
+
+            if (isset($_POST['min_cashin_per_transaction'])) {
+                $data['min_cashin_per_transaction'] = $_POST['min_cashin_per_transaction'] !== ''
+                    ? $this->parseDecimal($_POST['min_cashin_per_transaction']) : 0.01;
+            }
+
+            if (isset($_POST['min_cashout_per_transaction'])) {
+                $data['min_cashout_per_transaction'] = $_POST['min_cashout_per_transaction'] !== ''
+                    ? $this->parseDecimal($_POST['min_cashout_per_transaction']) : 0.01;
             }
 
             if ($data['is_default']) {

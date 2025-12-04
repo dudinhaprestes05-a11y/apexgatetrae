@@ -166,6 +166,11 @@ try {
         $controller = new AdminController();
         $controller->updateSellerFees($matches[1]);
     }
+    elseif (preg_match('#^/admin/sellers/(\d+)/limits$#', $uri, $matches) && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->updateSellerLimits($matches[1]);
+    }
     elseif (preg_match('#^/admin/sellers/(\d+)/toggle-cashin$#', $uri, $matches) && $method === 'POST') {
         require_once __DIR__ . '/app/controllers/web/AdminController.php';
         $controller = new AdminController();
