@@ -62,6 +62,14 @@ class SellerController {
             exit;
         }
 
+        // Verificar se as informações já foram completadas
+        $seller = $this->sellerModel->find($this->sellerId);
+        if ($seller['personal_info_completed']) {
+            $_SESSION['error'] = 'Suas informações pessoais já foram registradas e não podem ser alteradas. Entre em contato com o suporte se precisar fazer alterações.';
+            header('Location: /seller/personal-info');
+            exit;
+        }
+
         $documentType = $_POST['personal_document_type'] ?? '';
         $birthDate = $_POST['birth_date'] ?? '';
 
