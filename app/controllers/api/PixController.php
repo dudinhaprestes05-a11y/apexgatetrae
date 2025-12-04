@@ -93,10 +93,6 @@ class PixController {
             errorResponse($error, 400, $details);
         }
 
-        if (!$this->sellerModel->checkDailyLimit($seller['id'], $amount)) {
-            errorResponse('Daily limit exceeded', 403);
-        }
-
         $fraudAnalysis = $this->antiFraudService->analyzeTransaction(
             $seller['id'],
             $amount,
@@ -215,8 +211,6 @@ class PixController {
             if (isset($input['splits']) && !empty($input['splits'])) {
                 $this->splitService->createSplits($cashinId, $netAmount, $input['splits']);
             }
-
-            $this->sellerModel->incrementDailyUsed($seller['id'], $amount);
 
             Database::getInstance()->commit();
 

@@ -14,30 +14,6 @@ class Seller extends BaseModel {
         return $this->execute($sql, [$amount, $sellerId]);
     }
 
-    public function checkDailyLimit($sellerId, $amount) {
-        $seller = $this->find($sellerId);
-
-        if (!$seller) {
-            return false;
-        }
-
-        if ($seller['daily_reset_at'] < date('Y-m-d')) {
-            $this->execute(
-                "UPDATE sellers SET daily_used = 0, daily_reset_at = ? WHERE id = ?",
-                [date('Y-m-d'), $sellerId]
-            );
-            $seller['daily_used'] = 0;
-        }
-
-        $newUsed = $seller['daily_used'] + $amount;
-
-        return $newUsed <= $seller['daily_limit'];
-    }
-
-    public function incrementDailyUsed($sellerId, $amount) {
-        $sql = "UPDATE sellers SET daily_used = daily_used + ?, updated_at = NOW() WHERE id = ?";
-        return $this->execute($sql, [$amount, $sellerId]);
-    }
 
     public function checkDailyCashoutLimit($sellerId, $amount) {
         $seller = $this->find($sellerId);
@@ -143,7 +119,6 @@ class Seller extends BaseModel {
     public function createSeller($data) {
         $data['api_key'] = generateApiKey();
         $data['api_secret'] = hash('sha256', generateApiSecret());
-        $data['daily_reset_at'] = date('Y-m-d');
 
         return $this->create($data);
     }
