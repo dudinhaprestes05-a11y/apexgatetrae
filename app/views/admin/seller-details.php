@@ -125,6 +125,151 @@ $statusColors = [
             </div>
         </div>
 
+        <!-- Personal Information Card -->
+        <?php if ($seller['personal_info_completed']): ?>
+        <div class="card p-6">
+            <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                <i class="fas fa-user-check text-green-500 mr-2"></i>
+                Informações Pessoais
+                <span class="badge badge-success ml-3 text-xs">
+                    <i class="fas fa-check-circle mr-1"></i>Completo
+                </span>
+            </h3>
+            <div class="grid grid-cols-2 gap-6">
+                <!-- Document Information -->
+                <div class="col-span-2 p-4 bg-slate-800 bg-opacity-50 rounded-lg border border-slate-700">
+                    <h4 class="text-sm font-semibold text-white mb-4 flex items-center">
+                        <i class="fas fa-id-card text-blue-500 mr-2"></i>
+                        Documento de Identificação
+                    </h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-slate-400">Tipo de Documento</label>
+                            <p class="text-white mt-1 font-semibold">
+                                <?= $seller['personal_document_type'] === 'rg' ? 'RG - Registro Geral' : 'CNH - Carteira de Habilitação' ?>
+                            </p>
+                        </div>
+                        <?php if ($seller['personal_document_type'] === 'rg'): ?>
+                            <div>
+                                <label class="text-sm font-medium text-slate-400">Número do RG</label>
+                                <p class="text-white mt-1 font-mono"><?= htmlspecialchars($seller['rg_number'] ?? 'N/A') ?></p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-400">Órgão Emissor</label>
+                                <p class="text-white mt-1"><?= htmlspecialchars($seller['rg_issuer'] ?? 'N/A') ?></p>
+                            </div>
+                            <?php if ($seller['rg_issue_date']): ?>
+                            <div>
+                                <label class="text-sm font-medium text-slate-400">Data de Emissão</label>
+                                <p class="text-white mt-1"><?= date('d/m/Y', strtotime($seller['rg_issue_date'])) ?></p>
+                            </div>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <div>
+                                <label class="text-sm font-medium text-slate-400">Número da CNH</label>
+                                <p class="text-white mt-1 font-mono"><?= htmlspecialchars($seller['cnh_number'] ?? 'N/A') ?></p>
+                            </div>
+                            <?php if ($seller['cnh_expiry_date']): ?>
+                            <div>
+                                <label class="text-sm font-medium text-slate-400">Data de Validade</label>
+                                <p class="text-white mt-1"><?= date('d/m/Y', strtotime($seller['cnh_expiry_date'])) ?></p>
+                            </div>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Birth Date -->
+                <?php if ($seller['birth_date']): ?>
+                <div>
+                    <label class="text-sm font-medium text-slate-400">Data de Nascimento</label>
+                    <p class="text-white mt-1"><?= date('d/m/Y', strtotime($seller['birth_date'])) ?></p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-slate-400">Idade</label>
+                    <p class="text-white mt-1">
+                        <?php
+                        $birthDate = new DateTime($seller['birth_date']);
+                        $today = new DateTime();
+                        $age = $today->diff($birthDate)->y;
+                        echo $age . ' anos';
+                        ?>
+                    </p>
+                </div>
+                <?php endif; ?>
+
+                <!-- Address Information -->
+                <div class="col-span-2 p-4 bg-slate-800 bg-opacity-50 rounded-lg border border-slate-700">
+                    <h4 class="text-sm font-semibold text-white mb-4 flex items-center">
+                        <i class="fas fa-map-marker-alt text-red-500 mr-2"></i>
+                        Endereço Residencial
+                    </h4>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="text-sm font-medium text-slate-400">CEP</label>
+                                <p class="text-white mt-1 font-mono"><?= htmlspecialchars($seller['address_zipcode'] ?? 'N/A') ?></p>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="text-sm font-medium text-slate-400">Rua/Avenida</label>
+                                <p class="text-white mt-1"><?= htmlspecialchars($seller['address_street'] ?? 'N/A') ?></p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="text-sm font-medium text-slate-400">Número</label>
+                                <p class="text-white mt-1"><?= htmlspecialchars($seller['address_number'] ?? 'N/A') ?></p>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="text-sm font-medium text-slate-400">Complemento</label>
+                                <p class="text-white mt-1"><?= htmlspecialchars($seller['address_complement'] ?: 'Não informado') ?></p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="text-sm font-medium text-slate-400">Bairro</label>
+                                <p class="text-white mt-1"><?= htmlspecialchars($seller['address_neighborhood'] ?? 'N/A') ?></p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-400">Cidade</label>
+                                <p class="text-white mt-1"><?= htmlspecialchars($seller['address_city'] ?? 'N/A') ?></p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-400">Estado</label>
+                                <p class="text-white mt-1 uppercase"><?= htmlspecialchars($seller['address_state'] ?? 'N/A') ?></p>
+                            </div>
+                        </div>
+                        <?php if ($seller['address_street'] && $seller['address_city'] && $seller['address_state']): ?>
+                        <div class="pt-3 border-t border-slate-700">
+                            <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($seller['address_street'] . ', ' . $seller['address_number'] . ', ' . $seller['address_neighborhood'] . ', ' . $seller['address_city'] . ' - ' . $seller['address_state'] . ', ' . $seller['address_zipcode']) ?>"
+                               target="_blank"
+                               class="inline-flex items-center text-blue-400 hover:text-blue-300 text-sm">
+                                <i class="fas fa-map-marked-alt mr-2"></i>
+                                Ver no Google Maps
+                            </a>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php else: ?>
+        <div class="card p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-2 flex items-center">
+                        <i class="fas fa-user-times text-yellow-500 mr-2"></i>
+                        Informações Pessoais
+                    </h3>
+                    <p class="text-slate-400 text-sm">O seller ainda não completou as informações pessoais</p>
+                </div>
+                <span class="badge badge-warning">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>Incompleto
+                </span>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <!-- Fees Configuration Card -->
         <div class="card p-6">
             <h3 class="text-xl font-bold text-white mb-6 flex items-center">
