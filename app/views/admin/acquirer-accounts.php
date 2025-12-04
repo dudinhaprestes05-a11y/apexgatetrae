@@ -185,8 +185,9 @@ require_once __DIR__ . '/../layouts/header.php';
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Client Secret *</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Client Secret <span id="secret_required_indicator">*</span></label>
                         <input type="password" id="account_client_secret" name="client_secret" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <p id="secret_help_text" class="text-xs text-gray-500 mt-1 hidden">Deixe vazio para manter o atual</p>
                     </div>
 
                     <div>
@@ -254,6 +255,9 @@ function openCreateModal() {
     document.getElementById('accountForm').reset();
     document.getElementById('account_id').value = '';
     document.getElementById('account_is_active').checked = true;
+    document.getElementById('account_client_secret').required = true;
+    document.getElementById('secret_required_indicator').classList.remove('hidden');
+    document.getElementById('secret_help_text').classList.add('hidden');
     document.getElementById('accountModal').classList.remove('hidden');
 }
 
@@ -272,6 +276,9 @@ function editAccount(id) {
                 document.getElementById('account_name').value = account.name;
                 document.getElementById('account_client_id').value = account.client_id || '';
                 document.getElementById('account_client_secret').value = '';
+                document.getElementById('account_client_secret').required = false;
+                document.getElementById('secret_required_indicator').classList.add('hidden');
+                document.getElementById('secret_help_text').classList.remove('hidden');
                 document.getElementById('account_merchant_id').value = account.merchant_id || '';
                 document.getElementById('account_max_cashin').value = account.max_cashin_per_transaction || '';
                 document.getElementById('account_max_cashout').value = account.max_cashout_per_transaction || '';
