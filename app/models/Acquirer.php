@@ -10,7 +10,21 @@ class Acquirer extends BaseModel {
     }
 
     public function getActiveAcquirers() {
-        return $this->where(['status' => 'active'], 'priority_order ASC');
+        return $this->where(['is_active' => true]);
+    }
+
+    public function getAllWithAccountCount() {
+        $sql = "
+            SELECT a.*,
+                COUNT(aa.id) as account_count,
+                COUNT(CASE WHEN aa.is_active = true THEN 1 END) as active_account_count
+            FROM acquirers a
+            LEFT JOIN acquirer_accounts aa ON aa.acquirer_id = a.id
+            GROUP BY a.id
+            ORDER BY a.name ASC
+        ";
+
+        return $this->query($sql);
     }
 
     public function getNextAvailableAcquirer($excludeIds = []) {

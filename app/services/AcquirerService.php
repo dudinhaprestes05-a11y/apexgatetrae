@@ -1,14 +1,17 @@
 <?php
 
 require_once __DIR__ . '/../models/Acquirer.php';
+require_once __DIR__ . '/../models/AcquirerAccount.php';
 require_once __DIR__ . '/../models/Log.php';
 
 class AcquirerService {
     private $acquirerModel;
+    private $accountModel;
     private $logModel;
 
     public function __construct() {
         $this->acquirerModel = new Acquirer();
+        $this->accountModel = new AcquirerAccount();
         $this->logModel = new Log();
     }
 
@@ -248,5 +251,167 @@ class AcquirerService {
         }
 
         return $acquirer;
+    }
+
+    public function selectAccountForSeller($sellerId, $transactionType = 'cashin', $excludeAccountIds = []) {
+        $account = $this->accountModel->getNextAccountForSeller($sellerId, $transactionType, $excludeAccountIds);
+
+        if (!$account) {
+            $this->logModel->error('acquirer', 'No available account found for seller', [
+                'seller_id' => $sellerId,
+                'transaction_type' => $transactionType,
+                'excluded_ids' => $excludeAccountIds
+            ]);
+            return null;
+        }
+
+        $this->logModel->info('acquirer', 'Account selected for seller', [
+            'seller_id' => $sellerId,
+            'account_id' => $account['id'],
+            'account_name' => $account['name'],
+            'acquirer_code' => $account['acquirer_code']
+        ]);
+
+        return $account;
+    }
+
+    public function executeWithFallback($sellerId, $transactionType, $callable, $data) {
+        $excludeAccountIds = [];
+        $maxAttempts = 5;
+        $attempt = 0;
+        $lastError = null;
+
+        while ($attempt < $maxAttempts) {
+            $attempt++;
+
+            $account = $this->selectAccountForSeller($sellerId, $transactionType, $excludeAccountIds);
+
+            if (!$account) {
+                $this->logModel->error('acquirer', 'No more accounts available for fallback', [
+                    'seller_id' => $sellerId,
+                    'transaction_type' => $transactionType,
+                    'attempt' => $attempt,
+                    'last_error' => $lastError
+                ]);
+
+                return [
+                    'success' => false,
+                    'error' => $lastError ?? 'No available accounts',
+                    'account_id' => null
+                ];
+            }
+
+            $acquirer = [
+                'id' => $account['acquirer_id'],
+                'code' => $account['acquirer_code'],
+                'api_url' => $account['base_url'],
+                'client_id' => $account['client_id'],
+                'client_secret' => $account['client_secret'],
+                'merchant_id' => $account['merchant_id']
+            ];
+
+            $this->logModel->info('acquirer', 'Attempting transaction with account', [
+                'seller_id' => $sellerId,
+                'account_id' => $account['id'],
+                'account_name' => $account['name'],
+                'attempt' => $attempt
+            ]);
+
+            $result = call_user_func($callable, $acquirer, $data);
+
+            if ($result['success']) {
+                $this->accountModel->markAccountUsed($account['id'], $data['amount'] ?? 0);
+
+                $this->logModel->info('acquirer', 'Transaction successful with account', [
+                    'seller_id' => $sellerId,
+                    'account_id' => $account['id'],
+                    'attempt' => $attempt
+                ]);
+
+                return [
+                    'success' => true,
+                    'data' => $result['data'],
+                    'account_id' => $account['id']
+                ];
+            }
+
+            $lastError = $result['error'] ?? 'Unknown error';
+            $isRetryable = $this->isRetryableError($lastError);
+
+            $this->logModel->warning('acquirer', 'Transaction failed with account', [
+                'seller_id' => $sellerId,
+                'account_id' => $account['id'],
+                'attempt' => $attempt,
+                'error' => $lastError,
+                'is_retryable' => $isRetryable
+            ]);
+
+            if ($isRetryable) {
+                $excludeAccountIds[] = $account['id'];
+            } else {
+                return [
+                    'success' => false,
+                    'error' => $lastError,
+                    'account_id' => $account['id']
+                ];
+            }
+        }
+
+        return [
+            'success' => false,
+            'error' => $lastError ?? 'Maximum attempts reached',
+            'account_id' => null
+        ];
+    }
+
+    private function isRetryableError($error) {
+        $retryableErrors = [
+            'saldo insuficiente',
+            'insufficient balance',
+            'insufficient funds',
+            'limit exceeded',
+            'timeout',
+            'connection error',
+            'service unavailable'
+        ];
+
+        $errorLower = strtolower($error);
+
+        foreach ($retryableErrors as $retryable) {
+            if (strpos($errorLower, $retryable) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function createPixCashinWithFallback($sellerId, $data) {
+        return $this->executeWithFallback($sellerId, 'cashin', function($acquirer, $data) {
+            return $this->createPixCashin($acquirer, $data);
+        }, $data);
+    }
+
+    public function createPixCashoutWithFallback($sellerId, $data) {
+        return $this->executeWithFallback($sellerId, 'cashout', function($acquirer, $data) {
+            return $this->createPixCashout($acquirer, $data);
+        }, $data);
+    }
+
+    public function getAccountForTransaction($accountId) {
+        $account = $this->accountModel->getAccountWithAcquirer($accountId);
+
+        if (!$account) {
+            return null;
+        }
+
+        return [
+            'id' => $account['acquirer_id'],
+            'code' => $account['acquirer_code'],
+            'api_url' => $account['base_url'],
+            'client_id' => $account['client_id'],
+            'client_secret' => $account['client_secret'],
+            'merchant_id' => $account['merchant_id']
+        ];
     }
 }

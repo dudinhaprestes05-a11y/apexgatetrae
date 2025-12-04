@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../models/SellerDocument.php';
 require_once __DIR__ . '/../../models/PixCashin.php';
 require_once __DIR__ . '/../../models/PixCashout.php';
 require_once __DIR__ . '/../../models/Acquirer.php';
+require_once __DIR__ . '/../../models/AcquirerAccount.php';
 require_once __DIR__ . '/../../models/User.php';
 require_once __DIR__ . '/../../models/Log.php';
 require_once __DIR__ . '/../../models/SystemSettings.php';
@@ -18,6 +19,7 @@ class AdminController {
     private $cashinModel;
     private $cashoutModel;
     private $acquirerModel;
+    private $accountModel;
     private $userModel;
     private $logModel;
     private $settingsModel;
@@ -32,6 +34,7 @@ class AdminController {
         $this->cashinModel = new PixCashin();
         $this->cashoutModel = new PixCashout();
         $this->acquirerModel = new Acquirer();
+        $this->accountModel = new AcquirerAccount();
         $this->userModel = new User();
         $this->logModel = new Log();
         $this->settingsModel = new SystemSettings();
@@ -1018,6 +1021,223 @@ class AdminController {
 
         $_SESSION['success'] = 'Configurações atualizadas com sucesso!';
         header('Location: /admin/settings');
+        exit;
+    }
+
+    public function getAcquirerAccounts($acquirerId) {
+        header('Content-Type: application/json');
+
+        $accounts = $this->accountModel->getByAcquirer($acquirerId);
+
+        echo json_encode(['success' => true, 'accounts' => $accounts]);
+        exit;
+    }
+
+    public function createAcquirerAccount($acquirerId) {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Método não permitido']);
+            exit;
+        }
+
+        $name = trim($_POST['name'] ?? '');
+        $clientId = trim($_POST['client_id'] ?? '');
+        $clientSecret = trim($_POST['client_secret'] ?? '');
+        $merchantId = trim($_POST['merchant_id'] ?? '');
+        $balance = floatval($_POST['balance'] ?? 0);
+        $isActive = isset($_POST['is_active']) ? (bool)$_POST['is_active'] : true;
+
+        if (empty($name) || empty($clientId) || empty($clientSecret) || empty($merchantId)) {
+            echo json_encode(['success' => false, 'error' => 'Todos os campos são obrigatórios']);
+            exit;
+        }
+
+        $data = [
+            'acquirer_id' => $acquirerId,
+            'name' => $name,
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret,
+            'merchant_id' => $merchantId,
+            'balance' => $balance,
+            'is_active' => $isActive
+        ];
+
+        $accountId = $this->accountModel->create($data);
+
+        $this->logModel->info('admin', 'Conta de adquirente criada', [
+            'account_id' => $accountId,
+            'acquirer_id' => $acquirerId,
+            'name' => $name,
+            'admin_id' => $_SESSION['user_id']
+        ]);
+
+        echo json_encode(['success' => true, 'message' => 'Conta criada com sucesso!', 'id' => $accountId]);
+        exit;
+    }
+
+    public function updateAcquirerAccount($accountId) {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Método não permitido']);
+            exit;
+        }
+
+        $account = $this->accountModel->find($accountId);
+        if (!$account) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Conta não encontrada']);
+            exit;
+        }
+
+        $name = trim($_POST['name'] ?? '');
+        $clientId = trim($_POST['client_id'] ?? '');
+        $clientSecret = trim($_POST['client_secret'] ?? '');
+        $merchantId = trim($_POST['merchant_id'] ?? '');
+        $balance = floatval($_POST['balance'] ?? 0);
+        $isActive = isset($_POST['is_active']) ? (bool)$_POST['is_active'] : true;
+
+        if (empty($name) || empty($clientId) || empty($clientSecret) || empty($merchantId)) {
+            echo json_encode(['success' => false, 'error' => 'Todos os campos são obrigatórios']);
+            exit;
+        }
+
+        $data = [
+            'name' => $name,
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret,
+            'merchant_id' => $merchantId,
+            'balance' => $balance,
+            'is_active' => $isActive,
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $this->accountModel->update($accountId, $data);
+
+        $this->logModel->info('admin', 'Conta de adquirente atualizada', [
+            'account_id' => $accountId,
+            'name' => $name,
+            'admin_id' => $_SESSION['user_id']
+        ]);
+
+        echo json_encode(['success' => true, 'message' => 'Conta atualizada com sucesso!']);
+        exit;
+    }
+
+    public function deleteAcquirerAccount($accountId) {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Método não permitido']);
+            exit;
+        }
+
+        $account = $this->accountModel->find($accountId);
+        if (!$account) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Conta não encontrada']);
+            exit;
+        }
+
+        $this->accountModel->delete($accountId);
+
+        $this->logModel->info('admin', 'Conta de adquirente excluída', [
+            'account_id' => $accountId,
+            'admin_id' => $_SESSION['user_id']
+        ]);
+
+        echo json_encode(['success' => true, 'message' => 'Conta excluída com sucesso!']);
+        exit;
+    }
+
+    public function getSellerAcquirerAccounts($sellerId) {
+        header('Content-Type: application/json');
+
+        $accounts = $this->accountModel->getAccountsBySellerWithStats($sellerId);
+
+        echo json_encode(['success' => true, 'accounts' => $accounts]);
+        exit;
+    }
+
+    public function assignAccountToSeller($sellerId) {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Método não permitido']);
+            exit;
+        }
+
+        $accountId = intval($_POST['account_id'] ?? 0);
+        $priority = intval($_POST['priority'] ?? 1);
+        $strategy = $_POST['strategy'] ?? 'priority_only';
+        $percentage = intval($_POST['percentage'] ?? 0);
+
+        if (!$accountId) {
+            echo json_encode(['success' => false, 'error' => 'Conta é obrigatória']);
+            exit;
+        }
+
+        $this->accountModel->assignToSeller($sellerId, $accountId, $priority, $strategy, $percentage);
+
+        $this->logModel->info('admin', 'Conta atribuída ao seller', [
+            'seller_id' => $sellerId,
+            'account_id' => $accountId,
+            'priority' => $priority,
+            'strategy' => $strategy,
+            'admin_id' => $_SESSION['user_id']
+        ]);
+
+        echo json_encode(['success' => true, 'message' => 'Conta atribuída com sucesso!']);
+        exit;
+    }
+
+    public function removeAccountFromSeller($sellerId, $accountId) {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Método não permitido']);
+            exit;
+        }
+
+        $this->accountModel->removeFromSeller($sellerId, $accountId);
+
+        $this->logModel->info('admin', 'Conta removida do seller', [
+            'seller_id' => $sellerId,
+            'account_id' => $accountId,
+            'admin_id' => $_SESSION['user_id']
+        ]);
+
+        echo json_encode(['success' => true, 'message' => 'Conta removida com sucesso!']);
+        exit;
+    }
+
+    public function toggleSellerAccountStatus($sellerId, $accountId) {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'error' => 'Método não permitido']);
+            exit;
+        }
+
+        $isActive = isset($_POST['is_active']) ? (bool)$_POST['is_active'] : true;
+
+        $this->accountModel->toggleSellerAccountStatus($sellerId, $accountId, $isActive);
+
+        $this->logModel->info('admin', 'Status da conta do seller alterado', [
+            'seller_id' => $sellerId,
+            'account_id' => $accountId,
+            'is_active' => $isActive,
+            'admin_id' => $_SESSION['user_id']
+        ]);
+
+        echo json_encode(['success' => true, 'message' => 'Status atualizado com sucesso!']);
         exit;
     }
 
