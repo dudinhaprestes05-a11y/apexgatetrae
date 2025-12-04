@@ -51,6 +51,16 @@ try {
         $controller = new SellerController();
         $controller->dashboard();
     }
+    elseif ($uri === '/seller/personal-info') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->personalInfo();
+    }
+    elseif ($uri === '/seller/personal-info/save' && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->savePersonalInfo();
+    }
     elseif ($uri === '/seller/documents') {
         require_once __DIR__ . '/app/controllers/web/SellerController.php';
         $controller = new SellerController();

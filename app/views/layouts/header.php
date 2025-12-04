@@ -377,6 +377,11 @@ $currentPath = $_SERVER['REQUEST_URI'];
                         <span>Saque</span>
                     </a>
 
+                    <a href="/seller/personal-info" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-sm <?= strpos($currentPath, '/seller/personal-info') !== false ? 'active' : 'text-slate-300' ?>">
+                        <i class="fas fa-user-edit w-5"></i>
+                        <span>Informações Pessoais</span>
+                    </a>
+
                     <a href="/seller/documents" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-sm <?= strpos($currentPath, '/seller/documents') !== false ? 'active' : 'text-slate-300' ?>">
                         <i class="fas fa-file-alt w-5"></i>
                         <span>Documentos</span>

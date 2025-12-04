@@ -2,13 +2,16 @@
 $pageTitle = 'Documentos';
 require_once __DIR__ . '/../layouts/header.php';
 
+$isLegalPerson = $seller['person_type'] === 'business';
+$documentType = $seller['personal_document_type'] ?? 'rg';
+
 $docLabels = [
-    'rg_front' => $seller['person_type'] === 'legal' ? 'RG Representante - Frente' : 'RG - Frente',
-    'rg_back' => $seller['person_type'] === 'legal' ? 'RG Representante - Verso' : 'RG - Verso',
-    'cnh_front' => 'CNH - Frente',
-    'cnh_back' => 'CNH - Verso',
+    'rg_front' => $isLegalPerson ? 'RG Representante - Frente' : 'RG - Frente',
+    'rg_back' => $isLegalPerson ? 'RG Representante - Verso' : 'RG - Verso',
+    'cnh_front' => $isLegalPerson ? 'CNH Representante - Frente' : 'CNH - Frente',
+    'cnh_back' => $isLegalPerson ? 'CNH Representante - Verso' : 'CNH - Verso',
     'cpf' => 'CPF',
-    'selfie' => $seller['person_type'] === 'legal' ? 'Selfie do Representante com Documento' : 'Selfie com Documento',
+    'selfie' => $isLegalPerson ? 'Selfie do Representante com Documento' : 'Selfie com Documento',
     'proof_address' => 'Comprovante de Endereço',
     'social_contract' => 'Contrato Social',
     'cnpj' => 'Cartão CNPJ',

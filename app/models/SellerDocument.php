@@ -89,12 +89,28 @@ class SellerDocument extends BaseModel {
         return true;
     }
 
-    public function getRequiredDocumentTypes($personType) {
-        if ($personType === 'individual') {
-            return ['rg_front', 'rg_back', 'cpf', 'selfie', 'proof_address'];
+    public function getRequiredDocumentTypes($personType, $personalDocumentType = 'rg') {
+        $docs = [];
+
+        if ($personalDocumentType === 'cnh') {
+            $docs = ['cnh_front', 'cnh_back'];
         } else {
-            return ['rg_front', 'rg_back', 'selfie', 'social_contract', 'cnpj', 'partner_docs', 'proof_address'];
+            $docs = ['rg_front', 'rg_back'];
         }
+
+        if ($personType === 'individual') {
+            $docs[] = 'cpf';
+            $docs[] = 'selfie';
+            $docs[] = 'proof_address';
+        } else {
+            $docs[] = 'selfie';
+            $docs[] = 'social_contract';
+            $docs[] = 'cnpj';
+            $docs[] = 'partner_docs';
+            $docs[] = 'proof_address';
+        }
+
+        return $docs;
     }
 
     public function uploadDocument($sellerId, $documentType, $fileName, $filePath, $fileSize, $mimeType) {

@@ -51,10 +51,87 @@ class SellerController {
         require __DIR__ . '/../../views/seller/dashboard.php';
     }
 
+    public function personalInfo() {
+        $seller = $this->sellerModel->find($this->sellerId);
+        require __DIR__ . '/../../views/seller/personal-info.php';
+    }
+
+    public function savePersonalInfo() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /seller/personal-info');
+            exit;
+        }
+
+        $documentType = $_POST['personal_document_type'] ?? '';
+        $birthDate = $_POST['birth_date'] ?? '';
+
+        if (empty($documentType) || empty($birthDate)) {
+            $_SESSION['error'] = 'Tipo de documento e data de nascimento são obrigatórios';
+            header('Location: /seller/personal-info');
+            exit;
+        }
+
+        $updateData = [
+            'personal_document_type' => $documentType,
+            'birth_date' => $birthDate,
+            'address_zipcode' => trim($_POST['address_zipcode'] ?? ''),
+            'address_street' => trim($_POST['address_street'] ?? ''),
+            'address_number' => trim($_POST['address_number'] ?? ''),
+            'address_complement' => trim($_POST['address_complement'] ?? ''),
+            'address_neighborhood' => trim($_POST['address_neighborhood'] ?? ''),
+            'address_city' => trim($_POST['address_city'] ?? ''),
+            'address_state' => strtoupper(trim($_POST['address_state'] ?? '')),
+            'personal_info_completed' => 1
+        ];
+
+        if ($documentType === 'rg') {
+            $updateData['rg_number'] = trim($_POST['rg_number'] ?? '');
+            $updateData['rg_issuer'] = trim($_POST['rg_issuer'] ?? '');
+            $updateData['rg_issue_date'] = $_POST['rg_issue_date'] ?? null;
+
+            if (empty($updateData['rg_number']) || empty($updateData['rg_issuer'])) {
+                $_SESSION['error'] = 'Número do RG e órgão emissor são obrigatórios';
+                header('Location: /seller/personal-info');
+                exit;
+            }
+        } else {
+            $updateData['cnh_number'] = trim($_POST['cnh_number'] ?? '');
+            $updateData['cnh_category'] = $_POST['cnh_category'] ?? '';
+            $updateData['cnh_expiry_date'] = $_POST['cnh_expiry_date'] ?? null;
+
+            if (empty($updateData['cnh_number']) || empty($updateData['cnh_category'])) {
+                $_SESSION['error'] = 'Número da CNH e categoria são obrigatórios';
+                header('Location: /seller/personal-info');
+                exit;
+            }
+        }
+
+        if (empty($updateData['address_zipcode']) || empty($updateData['address_street']) ||
+            empty($updateData['address_number']) || empty($updateData['address_neighborhood']) ||
+            empty($updateData['address_city']) || empty($updateData['address_state'])) {
+            $_SESSION['error'] = 'Todos os campos de endereço são obrigatórios';
+            header('Location: /seller/personal-info');
+            exit;
+        }
+
+        $this->sellerModel->update($this->sellerId, $updateData);
+        $_SESSION['success'] = 'Informações pessoais salvas com sucesso!';
+
+        header('Location: /seller/documents');
+        exit;
+    }
+
     public function documents() {
         $seller = $this->sellerModel->find($this->sellerId);
+
+        if (!$seller['personal_info_completed']) {
+            $_SESSION['error'] = 'Complete suas informações pessoais antes de enviar os documentos';
+            header('Location: /seller/personal-info');
+            exit;
+        }
+
         $documents = $this->documentModel->getDocumentsBySeller($this->sellerId);
-        $requiredDocs = $this->documentModel->getRequiredDocumentTypes($seller['person_type']);
+        $requiredDocs = $this->documentModel->getRequiredDocumentTypes($seller['person_type'], $seller['personal_document_type'] ?? 'rg');
 
         require __DIR__ . '/../../views/seller/documents.php';
     }
