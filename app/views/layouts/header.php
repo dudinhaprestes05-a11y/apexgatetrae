@@ -332,6 +332,11 @@ $currentPath = $_SERVER['REQUEST_URI'];
 
                     <div class="border-t border-slate-700 my-4"></div>
 
+                    <a href="/seller/webhooks" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-sm <?= strpos($currentPath, '/seller/webhooks') !== false ? 'active' : 'text-slate-300' ?>">
+                        <i class="fas fa-satellite-dish w-5"></i>
+                        <span>Webhooks</span>
+                    </a>
+
                     <a href="/seller/profile" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-sm <?= strpos($currentPath, '/seller/profile') !== false ? 'active' : 'text-slate-300' ?>">
                         <i class="fas fa-user w-5"></i>
                         <span>Perfil</span>

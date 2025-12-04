@@ -101,6 +101,16 @@ try {
         $controller = new SellerController();
         $controller->markNotificationAsRead($matches[1]);
     }
+    elseif ($uri === '/seller/webhooks') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->webhooks();
+    }
+    elseif ($uri === '/seller/webhooks/update' && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->updateWebhooks();
+    }
     elseif ($uri === '/admin/dashboard') {
         require_once __DIR__ . '/app/controllers/web/AdminController.php';
         $controller = new AdminController();

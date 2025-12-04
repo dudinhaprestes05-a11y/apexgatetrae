@@ -40,32 +40,15 @@ require_once __DIR__ . '/../layouts/header.php';
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 class="text-lg font-bold text-gray-900 mb-4">Configurações de Webhook</h2>
+                <h2 class="text-lg font-bold text-gray-900 mb-4">Atualizar Telefone</h2>
                 <form method="POST" action="/seller/profile/update" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">URL do Webhook</label>
-                        <input type="url" name="webhook_url"
-                               value="<?= htmlspecialchars($seller['webhook_url'] ?? '') ?>"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                               placeholder="https://seu-site.com/webhook">
-                        <p class="text-xs text-gray-500 mt-1">URL que receberá notificações sobre transações</p>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Webhook Secret</label>
-                        <input type="text" name="webhook_secret"
-                               value="<?= htmlspecialchars($seller['webhook_secret'] ?? '') ?>"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                               placeholder="seu_secret_key">
-                        <p class="text-xs text-gray-500 mt-1">Chave secreta para validar webhooks (HMAC)</p>
-                    </div>
-
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
                         <input type="text" name="phone"
                                value="<?= htmlspecialchars($seller['phone'] ?? '') ?>"
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                placeholder="(11) 99999-9999">
+                        <p class="text-xs text-gray-500 mt-1">Número de contato para comunicações importantes</p>
                     </div>
 
                     <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition">
