@@ -49,9 +49,9 @@ class PreMigrationChecker {
 
     private function checkPodPayCredentials() {
         $settings = $this->db->query("
-            SELECT key, value
+            SELECT `key`, `value`
             FROM system_settings
-            WHERE key IN ('podpay_client_id', 'podpay_client_secret', 'podpay_merchant_id', 'podpay_api_key', 'podpay_api_secret')
+            WHERE `key` IN ('podpay_client_id', 'podpay_client_secret', 'podpay_merchant_id', 'podpay_api_key', 'podpay_api_secret')
         ")->fetchAll(PDO::FETCH_KEY_PAIR);
 
         $clientId = $settings['podpay_client_id'] ?? $settings['podpay_api_key'] ?? '';

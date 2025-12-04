@@ -166,9 +166,9 @@ class MigrationStatusChecker {
         // Check 5: Old settings
         echo "6. Checking old PodPay settings... ";
         $oldSettings = $this->db->query("
-            SELECT key, SUBSTRING(value, 1, 20) as value_preview
+            SELECT `key`, SUBSTRING(`value`, 1, 20) as value_preview
             FROM system_settings
-            WHERE key IN ('podpay_client_id', 'podpay_client_secret', 'podpay_merchant_id', 'podpay_api_key', 'podpay_api_secret')
+            WHERE `key` IN ('podpay_client_id', 'podpay_client_secret', 'podpay_merchant_id', 'podpay_api_key', 'podpay_api_secret')
         ")->fetchAll(PDO::FETCH_ASSOC);
 
         if (!empty($oldSettings)) {

@@ -119,9 +119,9 @@ class MigrationRollback {
 
             // Restore credentials from system_settings if available
             $settings = $this->db->query("
-                SELECT key, value
+                SELECT `key`, `value`
                 FROM system_settings
-                WHERE key IN ('podpay_client_id', 'podpay_client_secret', 'podpay_merchant_id')
+                WHERE `key` IN ('podpay_client_id', 'podpay_client_secret', 'podpay_merchant_id')
             ")->fetchAll(PDO::FETCH_KEY_PAIR);
 
             if (!empty($settings)) {
