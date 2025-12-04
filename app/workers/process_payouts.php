@@ -27,13 +27,42 @@ try {
                 throw new Exception('Acquirer not found');
             }
 
-            $result = $acquirerService->consultTransaction($acquirer, $payout['transaction_id']);
+            $acquirerTransactionId = $payout['acquirer_transaction_id'];
+
+            if (!$acquirerTransactionId) {
+                $logModel->warning('worker', 'Payout without acquirer transaction ID', [
+                    'transaction_id' => $payout['transaction_id']
+                ]);
+                continue;
+            }
+
+            $result = $acquirerService->consultTransaction($acquirer, $acquirerTransactionId, true);
 
             if ($result['success']) {
                 $status = $result['data']['status'] ?? 'processing';
-                $pixCashoutModel->updateStatus($payout['transaction_id'], $status);
+
+                $updateData = [];
+                if (isset($result['data']['net_amount'])) {
+                    $updateData['net_amount'] = $result['data']['net_amount'];
+                }
+                if (isset($result['data']['fee'])) {
+                    $updateData['fee_amount'] = $result['data']['fee'];
+                }
+
+                $pixCashoutModel->updateStatus($payout['transaction_id'], $status, $updateData);
+
+                $logModel->info('worker', 'Payout status updated', [
+                    'transaction_id' => $payout['transaction_id'],
+                    'old_status' => $payout['status'],
+                    'new_status' => $status
+                ]);
+
                 $processed++;
             } else {
+                $logModel->warning('worker', 'Failed to consult payout', [
+                    'transaction_id' => $payout['transaction_id'],
+                    'error' => $result['error']
+                ]);
                 $failed++;
             }
 

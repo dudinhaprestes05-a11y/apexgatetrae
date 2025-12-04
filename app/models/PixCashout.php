@@ -61,7 +61,7 @@ class PixCashout extends BaseModel {
     public function getPendingTransactions($limit = 100) {
         $sql = "
             SELECT * FROM {$this->table}
-            WHERE status = 'pending'
+            WHERE status IN ('pending', 'processing')
             ORDER BY created_at ASC
             LIMIT ?
         ";

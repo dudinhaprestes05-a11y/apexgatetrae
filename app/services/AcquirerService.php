@@ -129,9 +129,20 @@ class AcquirerService {
         }
     }
 
-    public function consultTransaction($acquirer, $transactionId) {
+    public function consultTransaction($acquirer, $transactionId, $isCashout = false) {
         try {
-            $response = $this->sendRequest($acquirer, "/pix/consult/{$transactionId}", null, 'GET');
+            if ($acquirer['code'] === 'podpay') {
+                require_once __DIR__ . '/PodPayService.php';
+                $podpay = new PodPayService($acquirer);
+
+                if ($isCashout) {
+                    $response = $podpay->consultTransfer($transactionId);
+                } else {
+                    $response = $podpay->consultTransaction($transactionId);
+                }
+            } else {
+                $response = $this->sendRequest($acquirer, "/pix/consult/{$transactionId}", null, 'GET');
+            }
 
             if ($response['success']) {
                 return [
@@ -146,6 +157,7 @@ class AcquirerService {
             $this->logModel->error('acquirer', 'Failed to consult transaction', [
                 'acquirer_id' => $acquirer['id'],
                 'transaction_id' => $transactionId,
+                'is_cashout' => $isCashout,
                 'error' => $e->getMessage()
             ]);
 
