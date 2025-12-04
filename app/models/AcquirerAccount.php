@@ -52,7 +52,7 @@ class AcquirerAccount extends BaseModel {
             $sql .= " AND a.supports_cashout = true";
         }
 
-        $sql .= " ORDER BY saa.priority ASC, saa.last_used_at ASC NULLS FIRST";
+        $sql .= " ORDER BY saa.priority ASC, saa.last_used_at ASC";
 
         return $this->query($sql, $params);
     }
@@ -92,7 +92,7 @@ class AcquirerAccount extends BaseModel {
                     WHEN saa.distribution_strategy = 'least_used' THEN saa.total_transactions
                     ELSE saa.priority
                 END ASC,
-                saa.last_used_at ASC NULLS FIRST
+                saa.last_used_at ASC
             LIMIT 1
         ";
 
@@ -140,11 +140,10 @@ class AcquirerAccount extends BaseModel {
             INSERT INTO seller_acquirer_accounts
                 (seller_id, acquirer_account_id, priority, distribution_strategy, percentage_allocation)
             VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT (seller_id, acquirer_account_id)
-            DO UPDATE SET
-                priority = EXCLUDED.priority,
-                distribution_strategy = EXCLUDED.distribution_strategy,
-                percentage_allocation = EXCLUDED.percentage_allocation,
+            ON DUPLICATE KEY UPDATE
+                priority = VALUES(priority),
+                distribution_strategy = VALUES(distribution_strategy),
+                percentage_allocation = VALUES(percentage_allocation),
                 updated_at = NOW()
         ";
 
