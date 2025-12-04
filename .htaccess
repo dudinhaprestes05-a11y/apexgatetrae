@@ -1,11 +1,22 @@
 RewriteEngine On
 
+# Block direct access to sensitive directories
+RewriteRule ^app/ - [F,L]
+RewriteRule ^sql/ - [F,L]
+RewriteRule ^\.bolt/ - [F,L]
+
+# Block access to PHP files except index.php
+RewriteCond %{REQUEST_URI} !^/index\.php$
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule \.php$ - [F,L]
+
+# Preserve Authorization header
 RewriteCond %{HTTP:Authorization} ^(.+)$
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
+# Route all requests through index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-
 RewriteRule ^(.*)$ index.php [QSA,L]
 
 <IfModule mod_headers.c>
@@ -15,12 +26,20 @@ RewriteRule ^(.*)$ index.php [QSA,L]
     Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 
+# Block access to sensitive files
 <Files ".env">
     Order allow,deny
     Deny from all
 </Files>
 
-<FilesMatch "\.(env|sql|log|md)$">
+<FilesMatch "\.(env|sql|log|md|json)$">
     Order allow,deny
     Deny from all
 </FilesMatch>
+
+# Block access to hidden files and directories
+<IfModule mod_rewrite.c>
+    RewriteCond %{SCRIPT_FILENAME} -d [OR]
+    RewriteCond %{SCRIPT_FILENAME} -f
+    RewriteRule "(^|/)\." - [F]
+</IfModule>
