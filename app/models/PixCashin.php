@@ -17,6 +17,20 @@ class PixCashin extends BaseModel {
         return $this->findBy('end_to_end_id', $endToEndId);
     }
 
+    public function findByExternalId($sellerId, $externalId) {
+        $sql = "
+            SELECT * FROM {$this->table}
+            WHERE seller_id = ?
+            AND external_id = ?
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$sellerId, $externalId]);
+
+        return $stmt->fetch();
+    }
+
     public function createTransaction($data) {
         $data['transaction_id'] = generateTransactionId('CASHIN');
         $data['status'] = 'pending';

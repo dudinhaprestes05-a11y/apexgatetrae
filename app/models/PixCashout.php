@@ -30,6 +30,20 @@ class PixCashout extends BaseModel {
         return $stmt->fetch();
     }
 
+    public function findByExternalId($sellerId, $externalId) {
+        $sql = "
+            SELECT * FROM {$this->table}
+            WHERE seller_id = ?
+            AND external_id = ?
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$sellerId, $externalId]);
+
+        return $stmt->fetch();
+    }
+
     public function createTransaction($data) {
         $data['transaction_id'] = generateTransactionId('CASHOUT');
         $data['status'] = 'pending';

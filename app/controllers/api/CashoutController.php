@@ -65,6 +65,17 @@ class CashoutController {
             errorResponse('Invalid beneficiary document', 400);
         }
 
+        if (isset($input['external_id']) && !empty($input['external_id'])) {
+            $existingTransaction = $this->pixCashoutModel->findByExternalId($seller['id'], $input['external_id']);
+            if ($existingTransaction) {
+                errorResponse('Duplicate external_id detected. A transaction with this external_id already exists', 409, [
+                    'existing_transaction_id' => $existingTransaction['transaction_id'],
+                    'existing_status' => $existingTransaction['status'],
+                    'created_at' => $existingTransaction['created_at']
+                ]);
+            }
+        }
+
         $duplicate = $this->pixCashoutModel->checkDuplicate($seller['id'], $pixKey, $beneficiaryDocument);
         if ($duplicate) {
             errorResponse('Duplicate transaction detected. There is already a pending or processing transaction with this PIX key or document', 409);

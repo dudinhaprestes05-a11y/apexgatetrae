@@ -82,6 +82,17 @@ class PixController {
             ]);
         }
 
+        if (isset($input['external_id']) && !empty($input['external_id'])) {
+            $existingTransaction = $this->pixCashinModel->findByExternalId($seller['id'], $input['external_id']);
+            if ($existingTransaction) {
+                errorResponse('Duplicate external_id detected. A transaction with this external_id already exists', 409, [
+                    'existing_transaction_id' => $existingTransaction['transaction_id'],
+                    'existing_status' => $existingTransaction['status'],
+                    'created_at' => $existingTransaction['created_at']
+                ]);
+            }
+        }
+
         if (isset($input['splits']) && !empty($input['splits'])) {
             $splitValidation = $this->splitService->validateSplits($amount, $input['splits']);
             if (!$splitValidation['valid']) {
