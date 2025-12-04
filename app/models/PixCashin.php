@@ -142,10 +142,15 @@ class PixCashin extends BaseModel {
 
     public function getRecentTransactions($limit = 10) {
         $sql = "
-            SELECT c.*, s.name as seller_name, a.name as acquirer_name
+            SELECT
+                c.*,
+                s.name as seller_name,
+                acc.name as account_name,
+                acq.name as acquirer_name
             FROM {$this->table} c
             LEFT JOIN sellers s ON c.seller_id = s.id
-            LEFT JOIN acquirers a ON c.acquirer_id = a.id
+            LEFT JOIN acquirer_accounts acc ON c.acquirer_account_id = acc.id
+            LEFT JOIN acquirers acq ON acc.acquirer_id = acq.id
             ORDER BY c.created_at DESC
             LIMIT ?
         ";

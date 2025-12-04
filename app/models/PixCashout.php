@@ -60,9 +60,22 @@ class PixCashout extends BaseModel {
 
     public function getPendingTransactions($limit = 100) {
         $sql = "
-            SELECT * FROM {$this->table}
-            WHERE status IN ('pending', 'processing')
-            ORDER BY created_at ASC
+            SELECT
+                c.*,
+                a.name as account_name,
+                a.client_id,
+                a.client_secret,
+                a.merchant_id,
+                a.acquirer_id,
+                acq.code as acquirer_code,
+                acq.name as acquirer_name,
+                acq.api_url
+            FROM {$this->table} c
+            LEFT JOIN acquirer_accounts a ON c.acquirer_account_id = a.id
+            LEFT JOIN acquirers acq ON a.acquirer_id = acq.id
+            WHERE c.status IN ('pending', 'processing')
+            AND c.acquirer_account_id IS NOT NULL
+            ORDER BY c.created_at ASC
             LIMIT ?
         ";
 
@@ -174,10 +187,15 @@ class PixCashout extends BaseModel {
 
     public function getRecentTransactions($limit = 10) {
         $sql = "
-            SELECT c.*, s.name as seller_name, a.name as acquirer_name
+            SELECT
+                c.*,
+                s.name as seller_name,
+                acc.name as account_name,
+                acq.name as acquirer_name
             FROM {$this->table} c
             LEFT JOIN sellers s ON c.seller_id = s.id
-            LEFT JOIN acquirers a ON c.acquirer_id = a.id
+            LEFT JOIN acquirer_accounts acc ON c.acquirer_account_id = acc.id
+            LEFT JOIN acquirers acq ON acc.acquirer_id = acq.id
             ORDER BY c.created_at DESC
             LIMIT ?
         ";

@@ -171,6 +171,78 @@ class AcquirerService {
         }
     }
 
+    public function consultTransactionByAccount($transactionData, $isCashout = false) {
+        try {
+            if (!isset($transactionData['acquirer_code'])) {
+                throw new Exception('Missing acquirer_code in transaction data');
+            }
+
+            if (!isset($transactionData['acquirer_transaction_id'])) {
+                throw new Exception('Missing acquirer_transaction_id');
+            }
+
+            $accountData = [
+                'id' => $transactionData['acquirer_id'] ?? null,
+                'code' => $transactionData['acquirer_code'],
+                'api_url' => $transactionData['api_url'] ?? '',
+                'client_id' => $transactionData['client_id'] ?? null,
+                'client_secret' => $transactionData['client_secret'] ?? null,
+                'merchant_id' => $transactionData['merchant_id'] ?? null
+            ];
+
+            $this->logModel->info('acquirer', 'Consulting transaction with account', [
+                'transaction_id' => $transactionData['transaction_id'] ?? null,
+                'acquirer_transaction_id' => $transactionData['acquirer_transaction_id'],
+                'account_id' => $transactionData['acquirer_account_id'] ?? null,
+                'account_name' => $transactionData['account_name'] ?? null,
+                'acquirer_code' => $transactionData['acquirer_code'],
+                'is_cashout' => $isCashout
+            ]);
+
+            if ($transactionData['acquirer_code'] === 'podpay') {
+                require_once __DIR__ . '/PodPayService.php';
+                $podpay = new PodPayService($accountData);
+
+                if ($isCashout) {
+                    $response = $podpay->consultTransfer($transactionData['acquirer_transaction_id']);
+                } else {
+                    $response = $podpay->consultTransaction($transactionData['acquirer_transaction_id']);
+                }
+            } else {
+                $response = $this->sendRequest($accountData, "/pix/consult/{$transactionData['acquirer_transaction_id']}", null, 'GET');
+            }
+
+            if ($response['success']) {
+                $this->logModel->info('acquirer', 'Transaction consultation successful', [
+                    'transaction_id' => $transactionData['transaction_id'] ?? null,
+                    'account_id' => $transactionData['acquirer_account_id'] ?? null,
+                    'status' => $response['data']['status'] ?? null
+                ]);
+
+                return [
+                    'success' => true,
+                    'data' => $response['data']
+                ];
+            } else {
+                throw new Exception($response['error'] ?? 'Unknown error from acquirer');
+            }
+
+        } catch (Exception $e) {
+            $this->logModel->error('acquirer', 'Failed to consult transaction with account', [
+                'transaction_id' => $transactionData['transaction_id'] ?? null,
+                'account_id' => $transactionData['acquirer_account_id'] ?? null,
+                'acquirer_transaction_id' => $transactionData['acquirer_transaction_id'] ?? null,
+                'is_cashout' => $isCashout,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
     private function sendRequest($acquirer, $endpoint, $payload = null, $method = 'POST') {
         $url = rtrim($acquirer['api_url'], '/') . $endpoint;
 

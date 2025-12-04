@@ -17,9 +17,15 @@ class PodPayService {
             $this->acquirer = $acquirer;
             $this->apiUrl = rtrim($acquirer['api_url'], '/');
 
-            $config = json_decode($acquirer['config'], true) ?? [];
-            $this->authToken = base64_encode($acquirer['api_key'] . ':' . $acquirer['api_secret']);
-            $this->withdrawKey = $config['withdraw_key'] ?? null;
+            // Support both account format (client_id/client_secret) and acquirer format (api_key/api_secret)
+            $clientId = $acquirer['client_id'] ?? $acquirer['api_key'] ?? '';
+            $clientSecret = $acquirer['client_secret'] ?? $acquirer['api_secret'] ?? '';
+
+            $this->authToken = base64_encode($clientId . ':' . $clientSecret);
+
+            // Get withdraw key from config or merchant_id (for accounts)
+            $config = json_decode($acquirer['config'] ?? '{}', true) ?? [];
+            $this->withdrawKey = $config['withdraw_key'] ?? $acquirer['merchant_id'] ?? null;
         }
     }
 

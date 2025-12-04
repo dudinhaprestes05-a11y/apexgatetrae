@@ -23,10 +23,19 @@ try {
 
     foreach ($pendingPayouts as $payout) {
         try {
-            $acquirer = (new \Acquirer())->find($payout['acquirer_id']);
+            if (!isset($payout['acquirer_account_id'])) {
+                $logModel->warning('worker', 'Payout without acquirer_account_id', [
+                    'transaction_id' => $payout['transaction_id']
+                ]);
+                continue;
+            }
 
-            if (!$acquirer) {
-                throw new Exception('Acquirer not found');
+            if (!isset($payout['acquirer_code'])) {
+                $logModel->warning('worker', 'Payout without acquirer_code', [
+                    'transaction_id' => $payout['transaction_id'],
+                    'account_id' => $payout['acquirer_account_id']
+                ]);
+                continue;
             }
 
             $acquirerTransactionId = $payout['acquirer_transaction_id'];
@@ -38,7 +47,7 @@ try {
                 continue;
             }
 
-            $result = $acquirerService->consultTransaction($acquirer, $acquirerTransactionId, true);
+            $result = $acquirerService->consultTransactionByAccount($payout, true);
 
             if ($result['success']) {
                 $status = $result['data']['status'] ?? 'processing';
@@ -48,6 +57,9 @@ try {
 
                 $logModel->info('worker', 'Payout status updated', [
                     'transaction_id' => $payout['transaction_id'],
+                    'account_id' => $payout['acquirer_account_id'],
+                    'account_name' => $payout['account_name'] ?? 'Unknown',
+                    'acquirer_code' => $payout['acquirer_code'],
                     'old_status' => $oldStatus,
                     'new_status' => $status
                 ]);
@@ -88,6 +100,9 @@ try {
             } else {
                 $logModel->warning('worker', 'Failed to consult payout', [
                     'transaction_id' => $payout['transaction_id'],
+                    'account_id' => $payout['acquirer_account_id'] ?? null,
+                    'account_name' => $payout['account_name'] ?? 'Unknown',
+                    'acquirer_code' => $payout['acquirer_code'] ?? 'Unknown',
                     'error' => $result['error']
                 ]);
                 $failed++;
@@ -96,6 +111,8 @@ try {
         } catch (Exception $e) {
             $logModel->error('worker', 'Failed to process payout', [
                 'transaction_id' => $payout['transaction_id'],
+                'account_id' => $payout['acquirer_account_id'] ?? null,
+                'account_name' => $payout['account_name'] ?? 'Unknown',
                 'error' => $e->getMessage()
             ]);
             $failed++;

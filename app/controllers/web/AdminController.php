@@ -371,6 +371,12 @@ class AdminController {
 
         $seller = $this->sellerModel->find($transaction['seller_id']);
 
+        // Get account information if available
+        $account = null;
+        if (!empty($transaction['acquirer_account_id'])) {
+            $account = $this->accountModel->getAccountWithAcquirer($transaction['acquirer_account_id']);
+        }
+
         require __DIR__ . '/../../views/admin/transaction-details.php';
     }
 
