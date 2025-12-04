@@ -6,7 +6,10 @@ require_once __DIR__ . '/../../models/SellerDocument.php';
 require_once __DIR__ . '/../../models/PixCashin.php';
 require_once __DIR__ . '/../../models/PixCashout.php';
 require_once __DIR__ . '/../../models/Notification.php';
+require_once __DIR__ . '/../../models/SystemSettings.php';
 require_once __DIR__ . '/../../services/FileUploadService.php';
+require_once __DIR__ . '/../../services/AntiFraudService.php';
+require_once __DIR__ . '/../../services/AcquirerService.php';
 
 class SellerController {
     private $sellerModel;
@@ -331,6 +334,167 @@ class SellerController {
 
         $result = $this->sellerModel->toggleIpWhitelist($this->sellerId, $enabled);
         echo json_encode($result);
+        exit;
+    }
+
+    public function cashout() {
+        $seller = $this->sellerModel->find($this->sellerId);
+        $systemSettings = new SystemSettings();
+        $settings = $systemSettings->getSettings();
+
+        $feePercentage = $seller['fee_percentage_cashout'] ?? $settings['default_fee_percentage_cashout'] ?? 0;
+        $feeFixed = $seller['fee_fixed_cashout'] ?? $settings['default_fee_fixed_cashout'] ?? 0;
+
+        $recentCashouts = $this->cashoutModel->getRecentBySeller($this->sellerId, 10);
+
+        require __DIR__ . '/../../views/seller/cashout.php';
+    }
+
+    public function processCashout() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /seller/cashout');
+            exit;
+        }
+
+        $seller = $this->sellerModel->find($this->sellerId);
+
+        if ($seller['temporarily_blocked'] || $seller['permanently_blocked']) {
+            $_SESSION['error'] = 'Sua conta está bloqueada e não pode realizar saques';
+            header('Location: /seller/cashout');
+            exit;
+        }
+
+        if (!$seller['cashout_enabled']) {
+            $_SESSION['error'] = 'Saque não está habilitado para sua conta';
+            header('Location: /seller/cashout');
+            exit;
+        }
+
+        if ($seller['status'] !== 'active') {
+            $_SESSION['error'] = 'Sua conta precisa estar ativa para realizar saques';
+            header('Location: /seller/cashout');
+            exit;
+        }
+
+        $amount = isset($_POST['amount']) ? floatval($_POST['amount']) : 0;
+        $pixKey = trim($_POST['pix_key'] ?? '');
+        $pixKeyType = $_POST['pix_key_type'] ?? '';
+        $beneficiaryName = trim($_POST['beneficiary_name'] ?? '');
+        $beneficiaryDocument = sanitizeDocument($_POST['beneficiary_document'] ?? '');
+
+        if ($amount <= 0) {
+            $_SESSION['error'] = 'Valor do saque deve ser maior que zero';
+            header('Location: /seller/cashout');
+            exit;
+        }
+
+        $limitCheck = $this->sellerModel->checkTransactionLimits($seller['id'], $amount, 'cashout');
+        if (!$limitCheck['valid']) {
+            $_SESSION['error'] = $limitCheck['error'];
+            header('Location: /seller/cashout');
+            exit;
+        }
+
+        if (empty($pixKey) || empty($pixKeyType) || empty($beneficiaryName) || empty($beneficiaryDocument)) {
+            $_SESSION['error'] = 'Todos os campos são obrigatórios';
+            header('Location: /seller/cashout');
+            exit;
+        }
+
+        $antiFraudService = new AntiFraudService();
+        if (!$antiFraudService->validatePixKey($pixKey, $pixKeyType)) {
+            $_SESSION['error'] = 'Chave PIX inválida para o tipo selecionado';
+            header('Location: /seller/cashout');
+            exit;
+        }
+
+        if (!validateCpfCnpj($beneficiaryDocument)) {
+            $_SESSION['error'] = 'CPF/CNPJ do beneficiário inválido';
+            header('Location: /seller/cashout');
+            exit;
+        }
+
+        $systemSettings = new SystemSettings();
+        $settings = $systemSettings->getSettings();
+        $feePercentage = $seller['fee_percentage_cashout'] ?? $settings['default_fee_percentage_cashout'] ?? 0;
+        $feeFixed = $seller['fee_fixed_cashout'] ?? $settings['default_fee_fixed_cashout'] ?? 0;
+
+        $feeAmount = calculateFee($amount, $feePercentage, $feeFixed);
+        $totalAmount = $amount + $feeAmount;
+
+        if ($seller['balance'] < $totalAmount) {
+            $_SESSION['error'] = 'Saldo insuficiente. Necessário: R$ ' . number_format($totalAmount, 2, ',', '.') . ', Disponível: R$ ' . number_format($seller['balance'], 2, ',', '.');
+            header('Location: /seller/cashout');
+            exit;
+        }
+
+        $duplicate = $this->cashoutModel->checkDuplicate($seller['id'], $pixKey, $beneficiaryDocument);
+        if ($duplicate) {
+            $_SESSION['error'] = 'Já existe uma transação de saque pendente ou em processamento com esta chave PIX ou documento';
+            header('Location: /seller/cashout');
+            exit;
+        }
+
+        $this->sellerModel->updateBalance($seller['id'], -$totalAmount);
+
+        $transactionId = generateTransactionId('CASHOUT');
+
+        $acquirerService = new AcquirerService();
+        $acquirerData = [
+            'transaction_id' => $transactionId,
+            'amount' => $amount,
+            'pix_key' => $pixKey,
+            'pix_key_type' => $pixKeyType,
+            'beneficiary_name' => $beneficiaryName,
+            'beneficiary_document' => $beneficiaryDocument
+        ];
+
+        $acquirerResponse = $acquirerService->createPixCashoutWithFallback($seller['id'], $acquirerData);
+
+        if (!$acquirerResponse['success']) {
+            $this->sellerModel->updateBalance($seller['id'], $totalAmount);
+
+            if ($acquirerResponse['account_id'] === null) {
+                $_SESSION['error'] = 'Valor da transação excede o limite permitido';
+            } else {
+                $_SESSION['error'] = 'Falha ao processar o saque. Tente novamente mais tarde.';
+            }
+
+            header('Location: /seller/cashout');
+            exit;
+        }
+
+        $accountId = $acquirerResponse['account_id'];
+        $account = $acquirerService->getAccountForTransaction($accountId);
+
+        if (!$account) {
+            $this->sellerModel->updateBalance($seller['id'], $totalAmount);
+            $_SESSION['error'] = 'Erro ao processar saque';
+            header('Location: /seller/cashout');
+            exit;
+        }
+
+        $cashoutData = [
+            'seller_id' => $seller['id'],
+            'acquirer_id' => $account['acquirer_id'],
+            'acquirer_account_id' => $accountId,
+            'transaction_id' => $transactionId,
+            'amount' => $amount,
+            'fee_amount' => $feeAmount,
+            'net_amount' => $amount,
+            'pix_key' => $pixKey,
+            'pix_key_type' => $pixKeyType,
+            'beneficiary_name' => $beneficiaryName,
+            'beneficiary_document' => $beneficiaryDocument,
+            'acquirer_transaction_id' => $acquirerResponse['data']['acquirer_transaction_id'] ?? null,
+            'end_to_end_id' => $acquirerResponse['data']['end_to_end_id'] ?? null,
+            'status' => 'processing'
+        ];
+
+        $this->cashoutModel->create($cashoutData);
+
+        $_SESSION['success'] = 'Saque solicitado com sucesso! ID da transação: ' . $transactionId;
+        header('Location: /seller/cashout');
         exit;
     }
 }

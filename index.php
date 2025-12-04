@@ -136,6 +136,16 @@ try {
         $controller = new SellerController();
         $controller->toggleIpWhitelist();
     }
+    elseif ($uri === '/seller/cashout') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->cashout();
+    }
+    elseif ($uri === '/seller/cashout/process' && $method === 'POST') {
+        require_once __DIR__ . '/app/controllers/web/SellerController.php';
+        $controller = new SellerController();
+        $controller->processCashout();
+    }
     elseif ($uri === '/admin/dashboard') {
         require_once __DIR__ . '/app/controllers/web/AdminController.php';
         $controller = new AdminController();
