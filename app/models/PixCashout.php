@@ -19,6 +19,7 @@ class PixCashout extends BaseModel {
             WHERE seller_id = ?
             AND (pix_key = ? OR beneficiary_document = ?)
             AND status IN ('pending', 'processing')
+            AND created_at >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)
             ORDER BY created_at DESC
             LIMIT 1
         ";
