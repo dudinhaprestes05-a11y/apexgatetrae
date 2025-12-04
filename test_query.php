@@ -10,7 +10,7 @@ try {
     echo "Testando query de contas disponíveis...\n\n";
 
     $sql = "
-        SELECT aa.id, aa.name as account_name, aa.account_identifier,
+        SELECT aa.id, aa.name as account_name, aa.merchant_id as account_identifier,
                a.name as acquirer_name, a.code as acquirer_code
         FROM acquirer_accounts aa
         JOIN acquirers a ON a.id = aa.acquirer_id
