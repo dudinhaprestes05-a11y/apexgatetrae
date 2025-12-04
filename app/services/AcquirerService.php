@@ -324,7 +324,7 @@ class AcquirerService {
         if ($hasSellerAccounts) {
             $sellerAccountIds = $this->sellerAccountModel->getAccountsBySeller($sellerId);
 
-            $sellerAccountIds = array_diff($sellerAccountIds, $excludeAccountIds);
+            $sellerAccountIds = array_values(array_diff($sellerAccountIds, $excludeAccountIds));
 
             if (empty($sellerAccountIds)) {
                 $this->logModel->error('acquirer', 'No available seller-specific accounts', [
@@ -335,6 +335,12 @@ class AcquirerService {
                 ]);
                 return null;
             }
+
+            $this->logModel->info('acquirer', 'Selecting from seller accounts in priority order', [
+                'seller_id' => $sellerId,
+                'account_ids' => $sellerAccountIds,
+                'amount' => $amount
+            ]);
 
             $account = $this->accountModel->getNextAccountFromList(
                 $sellerAccountIds,

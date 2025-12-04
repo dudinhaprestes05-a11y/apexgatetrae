@@ -129,7 +129,8 @@ class SellerAcquirerAccount extends BaseModel {
     public function getAccountsBySeller($sellerId) {
         $sql = "SELECT acquirer_account_id
                 FROM {$this->table}
-                WHERE seller_id = ? AND is_active = 1";
+                WHERE seller_id = ? AND is_active = 1
+                ORDER BY priority ASC, id ASC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$sellerId]);
