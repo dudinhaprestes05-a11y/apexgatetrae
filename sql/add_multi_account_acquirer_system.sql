@@ -99,15 +99,47 @@ CREATE TABLE IF NOT EXISTS seller_acquirer_accounts (
 -- Step 5: Add columns to track acquirer account in transactions
 ALTER TABLE pix_cashin
   ADD COLUMN IF NOT EXISTS acquirer_account_id INT UNSIGNED NULL,
-  ADD INDEX IF NOT EXISTS idx_pix_cashin_acquirer_account (acquirer_account_id),
-  ADD CONSTRAINT fk_pix_cashin_acquirer_account
-    FOREIGN KEY (acquirer_account_id) REFERENCES acquirer_accounts(id);
+  ADD INDEX IF NOT EXISTS idx_pix_cashin_acquirer_account (acquirer_account_id);
+
+-- Add foreign key constraint only if it doesn't exist
+SET @constraint_exists = (
+  SELECT COUNT(*)
+  FROM information_schema.TABLE_CONSTRAINTS
+  WHERE CONSTRAINT_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'pix_cashin'
+    AND CONSTRAINT_NAME = 'fk_pix_cashin_acquirer_account'
+);
+
+SET @sql = IF(@constraint_exists = 0,
+  'ALTER TABLE pix_cashin ADD CONSTRAINT fk_pix_cashin_acquirer_account FOREIGN KEY (acquirer_account_id) REFERENCES acquirer_accounts(id)',
+  'SELECT "Foreign key fk_pix_cashin_acquirer_account already exists" AS info'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 ALTER TABLE pix_cashout
   ADD COLUMN IF NOT EXISTS acquirer_account_id INT UNSIGNED NULL,
-  ADD INDEX IF NOT EXISTS idx_pix_cashout_acquirer_account (acquirer_account_id),
-  ADD CONSTRAINT fk_pix_cashout_acquirer_account
-    FOREIGN KEY (acquirer_account_id) REFERENCES acquirer_accounts(id);
+  ADD INDEX IF NOT EXISTS idx_pix_cashout_acquirer_account (acquirer_account_id);
+
+-- Add foreign key constraint only if it doesn't exist
+SET @constraint_exists = (
+  SELECT COUNT(*)
+  FROM information_schema.TABLE_CONSTRAINTS
+  WHERE CONSTRAINT_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'pix_cashout'
+    AND CONSTRAINT_NAME = 'fk_pix_cashout_acquirer_account'
+);
+
+SET @sql = IF(@constraint_exists = 0,
+  'ALTER TABLE pix_cashout ADD CONSTRAINT fk_pix_cashout_acquirer_account FOREIGN KEY (acquirer_account_id) REFERENCES acquirer_accounts(id)',
+  'SELECT "Foreign key fk_pix_cashout_acquirer_account already exists" AS info'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- Step 6: Security
 -- Note: Access control is handled by the application layer (PHP middleware)
