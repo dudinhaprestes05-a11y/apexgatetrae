@@ -40,6 +40,25 @@ class PixController {
         $seller = $this->authService->authenticateApiRequest();
         $this->authService->checkRateLimit($seller['api_key'], '/api/pix/create');
 
+        if ($seller['temporarily_blocked'] || $seller['permanently_blocked']) {
+            $this->logModel->warning('api', 'Cash-in attempt by blocked seller', [
+                'seller_id' => $seller['id'],
+                'seller_name' => $seller['name'],
+                'temporarily_blocked' => $seller['temporarily_blocked'],
+                'permanently_blocked' => $seller['permanently_blocked'],
+                'blocked_reason' => $seller['blocked_reason'] ?? null
+            ]);
+            errorResponse('This seller account is blocked', 403);
+        }
+
+        if (!$seller['cashin_enabled']) {
+            $this->logModel->warning('api', 'Cash-in attempt with cashin_enabled=false', [
+                'seller_id' => $seller['id'],
+                'seller_name' => $seller['name']
+            ]);
+            errorResponse('Cash-in is disabled for this seller', 403);
+        }
+
         $input = json_decode(file_get_contents('php://input'), true);
 
         if (!$input) {
