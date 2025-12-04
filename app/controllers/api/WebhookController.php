@@ -159,6 +159,19 @@ class WebhookController {
             throw new Exception("Transaction not found: {$transactionId}");
         }
 
+        if (!isset($data['acquirer_transaction_id'])) {
+            throw new Exception("Missing acquirer_transaction_id in webhook data");
+        }
+
+        $verified = $this->verifyWebhookWithAcquirer($transaction, $data);
+        if (!$verified) {
+            $this->logModel->warning('webhook', 'Webhook verification failed', [
+                'transaction_id' => $transactionId,
+                'acquirer_transaction_id' => $data['acquirer_transaction_id']
+            ]);
+            throw new Exception("Webhook verification failed - data mismatch");
+        }
+
         $updateData = [
             'status' => $data['status']
         ];
@@ -208,6 +221,19 @@ class WebhookController {
             throw new Exception("Transaction not found: {$transactionId}");
         }
 
+        if (!isset($data['acquirer_transaction_id'])) {
+            throw new Exception("Missing acquirer_transaction_id in webhook data");
+        }
+
+        $verified = $this->verifyCashoutWebhookWithAcquirer($transaction, $data);
+        if (!$verified) {
+            $this->logModel->warning('webhook', 'Cashout webhook verification failed', [
+                'transaction_id' => $transactionId,
+                'acquirer_transaction_id' => $data['acquirer_transaction_id']
+            ]);
+            throw new Exception("Cashout webhook verification failed - data mismatch");
+        }
+
         $updateData = [
             'status' => $data['status']
         ];
@@ -240,6 +266,188 @@ class WebhookController {
         ]);
     }
 
+    private function verifyWebhookWithAcquirer($transaction, $webhookData) {
+        try {
+            if (!isset($transaction['acquirer_account_id'])) {
+                $this->logModel->warning('webhook', 'Transaction has no acquirer_account_id', [
+                    'transaction_id' => $transaction['transaction_id']
+                ]);
+                return false;
+            }
+
+            $db = db();
+            $stmt = $db->prepare("
+                SELECT
+                    acc.*,
+                    acq.code as acquirer_code,
+                    acq.api_url,
+                    acq.api_key,
+                    acq.api_secret
+                FROM acquirer_accounts acc
+                INNER JOIN acquirers acq ON acc.acquirer_id = acq.id
+                WHERE acc.id = ?
+            ");
+            $stmt->execute([$transaction['acquirer_account_id']]);
+            $account = $stmt->fetch();
+
+            if (!$account) {
+                $this->logModel->error('webhook', 'Acquirer account not found', [
+                    'acquirer_account_id' => $transaction['acquirer_account_id']
+                ]);
+                return false;
+            }
+
+            if ($account['acquirer_code'] !== 'podpay') {
+                $this->logModel->info('webhook', 'Webhook verification skipped for non-PodPay acquirer', [
+                    'acquirer_code' => $account['acquirer_code']
+                ]);
+                return true;
+            }
+
+            require_once __DIR__ . '/../../services/PodPayService.php';
+            $podpay = new PodPayService($account);
+
+            $consultResult = $podpay->consultTransaction($webhookData['acquirer_transaction_id']);
+
+            if (!$consultResult['success']) {
+                $this->logModel->error('webhook', 'Failed to consult transaction with acquirer', [
+                    'transaction_id' => $transaction['transaction_id'],
+                    'acquirer_transaction_id' => $webhookData['acquirer_transaction_id'],
+                    'error' => $consultResult['error']
+                ]);
+                return false;
+            }
+
+            $consultedData = $consultResult['data'];
+            $mappedStatus = $this->mapPodPayTransactionStatus($consultedData['status']);
+
+            if ($mappedStatus !== $webhookData['status']) {
+                $this->logModel->error('webhook', 'Status mismatch between webhook and API consultation', [
+                    'transaction_id' => $transaction['transaction_id'],
+                    'webhook_status' => $webhookData['status'],
+                    'consulted_status_raw' => $consultedData['status'],
+                    'consulted_status_mapped' => $mappedStatus
+                ]);
+                return false;
+            }
+
+            if (isset($webhookData['amount']) && abs($consultedData['amount'] - $webhookData['amount']) > 0.01) {
+                $this->logModel->error('webhook', 'Amount mismatch between webhook and API consultation', [
+                    'transaction_id' => $transaction['transaction_id'],
+                    'webhook_amount' => $webhookData['amount'],
+                    'consulted_amount' => $consultedData['amount']
+                ]);
+                return false;
+            }
+
+            $this->logModel->info('webhook', 'Webhook verified successfully with acquirer API', [
+                'transaction_id' => $transaction['transaction_id'],
+                'acquirer_transaction_id' => $webhookData['acquirer_transaction_id'],
+                'status' => $consultedData['status']
+            ]);
+
+            return true;
+
+        } catch (Exception $e) {
+            $this->logModel->error('webhook', 'Exception during webhook verification', [
+                'transaction_id' => $transaction['transaction_id'],
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    private function verifyCashoutWebhookWithAcquirer($transaction, $webhookData) {
+        try {
+            if (!isset($transaction['acquirer_account_id'])) {
+                $this->logModel->warning('webhook', 'Transaction has no acquirer_account_id', [
+                    'transaction_id' => $transaction['transaction_id']
+                ]);
+                return false;
+            }
+
+            $db = db();
+            $stmt = $db->prepare("
+                SELECT
+                    acc.*,
+                    acq.code as acquirer_code,
+                    acq.api_url,
+                    acq.api_key,
+                    acq.api_secret
+                FROM acquirer_accounts acc
+                INNER JOIN acquirers acq ON acc.acquirer_id = acq.id
+                WHERE acc.id = ?
+            ");
+            $stmt->execute([$transaction['acquirer_account_id']]);
+            $account = $stmt->fetch();
+
+            if (!$account) {
+                $this->logModel->error('webhook', 'Acquirer account not found', [
+                    'acquirer_account_id' => $transaction['acquirer_account_id']
+                ]);
+                return false;
+            }
+
+            if ($account['acquirer_code'] !== 'podpay') {
+                $this->logModel->info('webhook', 'Webhook verification skipped for non-PodPay acquirer', [
+                    'acquirer_code' => $account['acquirer_code']
+                ]);
+                return true;
+            }
+
+            require_once __DIR__ . '/../../services/PodPayService.php';
+            $podpay = new PodPayService($account);
+
+            $consultResult = $podpay->consultTransfer($webhookData['acquirer_transaction_id']);
+
+            if (!$consultResult['success']) {
+                $this->logModel->error('webhook', 'Failed to consult transfer with acquirer', [
+                    'transaction_id' => $transaction['transaction_id'],
+                    'acquirer_transaction_id' => $webhookData['acquirer_transaction_id'],
+                    'error' => $consultResult['error']
+                ]);
+                return false;
+            }
+
+            $consultedData = $consultResult['data'];
+            $mappedStatus = $this->mapPodPayWithdrawStatus($consultedData['status']);
+
+            if ($mappedStatus !== $webhookData['status']) {
+                $this->logModel->error('webhook', 'Status mismatch between webhook and API consultation', [
+                    'transaction_id' => $transaction['transaction_id'],
+                    'webhook_status' => $webhookData['status'],
+                    'consulted_status_raw' => $consultedData['status'],
+                    'consulted_status_mapped' => $mappedStatus
+                ]);
+                return false;
+            }
+
+            if (isset($webhookData['amount']) && abs($consultedData['amount'] - $webhookData['amount']) > 0.01) {
+                $this->logModel->error('webhook', 'Amount mismatch between webhook and API consultation', [
+                    'transaction_id' => $transaction['transaction_id'],
+                    'webhook_amount' => $webhookData['amount'],
+                    'consulted_amount' => $consultedData['amount']
+                ]);
+                return false;
+            }
+
+            $this->logModel->info('webhook', 'Cashout webhook verified successfully with acquirer API', [
+                'transaction_id' => $transaction['transaction_id'],
+                'acquirer_transaction_id' => $webhookData['acquirer_transaction_id'],
+                'status' => $consultedData['status']
+            ]);
+
+            return true;
+
+        } catch (Exception $e) {
+            $this->logModel->error('webhook', 'Exception during cashout webhook verification', [
+                'transaction_id' => $transaction['transaction_id'],
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
     private function markCallbackProcessed($callbackId) {
         $db = db();
         $stmt = $db->prepare("UPDATE callbacks_acquirers SET status = 'processed', processed_at = NOW() WHERE id = ?");
@@ -250,5 +458,33 @@ class WebhookController {
         $db = db();
         $stmt = $db->prepare("UPDATE callbacks_acquirers SET status = 'error', error_message = ? WHERE id = ?");
         $stmt->execute([$error, $callbackId]);
+    }
+
+    private function mapPodPayTransactionStatus($podpayStatus) {
+        $statusMap = [
+            'waiting_payment' => 'waiting_payment',
+            'pending' => 'pending',
+            'approved' => 'paid',
+            'paid' => 'paid',
+            'refused' => 'failed',
+            'cancelled' => 'cancelled',
+            'expired' => 'expired'
+        ];
+
+        return $statusMap[$podpayStatus] ?? 'pending';
+    }
+
+    private function mapPodPayWithdrawStatus($podpayStatus) {
+        $statusMap = [
+            'PENDING_QUEUE' => 'processing',
+            'pending' => 'processing',
+            'processing' => 'processing',
+            'COMPLETED' => 'completed',
+            'completed' => 'completed',
+            'failed' => 'failed',
+            'cancelled' => 'cancelled'
+        ];
+
+        return $statusMap[$podpayStatus] ?? 'processing';
     }
 }
