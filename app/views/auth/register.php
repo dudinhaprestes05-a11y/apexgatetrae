@@ -7,7 +7,7 @@ unset($_SESSION['old_data']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro - Gateway PIX</title>
+    <title>Cadastro - <?= APP_NAME ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -18,7 +18,7 @@ unset($_SESSION['old_data']);
             <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-400 rounded-2xl mb-4 shadow-lg">
                 <i class="fas fa-bolt text-white text-2xl"></i>
             </div>
-            <h1 class="text-3xl font-bold text-gray-900">Gateway PIX</h1>
+            <h1 class="text-3xl font-bold text-gray-900"><?= APP_NAME ?></h1>
             <p class="text-gray-600 mt-2">Crie sua conta de seller</p>
         </div>
 
@@ -142,7 +142,7 @@ unset($_SESSION['old_data']);
         </div>
 
         <p class="text-center text-gray-500 text-sm mt-8">
-            &copy; <?= date('Y') ?> Gateway PIX. Todos os direitos reservados.
+            &copy; <?= date('Y') ?> <?= APP_NAME ?>. Todos os direitos reservados.
         </p>
     </div>
 

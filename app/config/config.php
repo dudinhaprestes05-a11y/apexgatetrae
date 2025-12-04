@@ -29,7 +29,7 @@ function loadEnv($path) {
 
 loadEnv(dirname(dirname(__DIR__)) . '/.env');
 
-define('APP_NAME', 'Gateway PIX');
+define('APP_NAME', getenv('APP_NAME') ?: 'Gateway PIX');
 define('APP_VERSION', '1.0.0');
 define('APP_ENV', getenv('APP_ENV') ?: 'development');
 
