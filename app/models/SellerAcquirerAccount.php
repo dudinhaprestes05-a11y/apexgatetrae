@@ -8,11 +8,12 @@ class SellerAcquirerAccount extends BaseModel {
     public function getBySellerWithDetails($sellerId) {
         $sql = "SELECT
                     saa.*,
-                    aa.account_name,
-                    aa.account_identifier,
+                    aa.name as account_name,
+                    aa.merchant_id as account_identifier,
                     aa.is_active as account_active,
+                    aa.balance as account_balance,
                     a.name as acquirer_name,
-                    a.acquirer_type
+                    a.code as acquirer_type
                 FROM {$this->table} saa
                 INNER JOIN acquirer_accounts aa ON saa.acquirer_account_id = aa.id
                 INNER JOIN acquirers a ON aa.acquirer_id = a.id
@@ -28,15 +29,14 @@ class SellerAcquirerAccount extends BaseModel {
     public function getActiveAccountsForSeller($sellerId, $acquirerType = null) {
         $sql = "SELECT
                     saa.*,
-                    aa.account_name,
-                    aa.account_identifier,
+                    aa.name as account_name,
+                    aa.merchant_id as account_identifier,
                     aa.client_id,
                     aa.client_secret,
-                    aa.certificate_path,
-                    aa.config,
+                    aa.balance,
                     a.name as acquirer_name,
-                    a.acquirer_type,
-                    a.webhook_url,
+                    a.code as acquirer_type,
+                    a.base_url,
                     a.supports_cashin,
                     a.supports_cashout
                 FROM {$this->table} saa
@@ -47,7 +47,7 @@ class SellerAcquirerAccount extends BaseModel {
                 AND aa.is_active = 1";
 
         if ($acquirerType) {
-            $sql .= " AND a.acquirer_type = ?";
+            $sql .= " AND a.code = ?";
         }
 
         $sql .= " ORDER BY saa.priority ASC, saa.id ASC";
