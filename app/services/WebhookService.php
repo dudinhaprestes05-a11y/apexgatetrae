@@ -110,7 +110,7 @@ class WebhookService {
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
-                'X-Signature: ' . $webhook['signature'],
+                'X-Webhook-Secret: ' . $webhook['signature'],
                 'X-Transaction-Id: ' . $webhook['transaction_id'],
                 'User-Agent: Gateway-PIX-Webhook/1.0'
             ],

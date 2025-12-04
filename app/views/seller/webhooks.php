@@ -29,7 +29,7 @@ require_once __DIR__ . '/../layouts/header.php';
                                value="<?= htmlspecialchars($seller['webhook_secret'] ?? '') ?>"
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                placeholder="sua_chave_secreta">
-                        <p class="text-xs text-gray-500 mt-2">Chave secreta para validar a autenticidade dos webhooks (HMAC SHA-256)</p>
+                        <p class="text-xs text-gray-500 mt-2">Chave secreta enviada no header X-Webhook-Secret para validar a autenticidade</p>
                     </div>
 
                     <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
@@ -66,8 +66,8 @@ require_once __DIR__ . '/../layouts/header.php';
                     Segurança
                 </h3>
                 <div class="text-sm text-gray-600 space-y-3">
-                    <p>Para validar que a requisição veio de nós, use o header <code class="px-2 py-1 bg-gray-100 rounded text-xs font-mono">X-Webhook-Signature</code>.</p>
-                    <p>Calcule o HMAC SHA-256 do corpo da requisição usando seu webhook secret e compare com a assinatura recebida.</p>
+                    <p>Para validar que a requisição veio de nós, verifique o header <code class="px-2 py-1 bg-gray-100 rounded text-xs font-mono">X-Webhook-Secret</code>.</p>
+                    <p>Compare o valor recebido neste header com o webhook secret que você configurou. Se forem iguais, a requisição é autêntica.</p>
                 </div>
             </div>
 

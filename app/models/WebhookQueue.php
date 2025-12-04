@@ -6,15 +6,13 @@ class WebhookQueue extends BaseModel {
     protected $table = 'webhooks_queue';
 
     public function enqueue($sellerId, $transactionId, $transactionType, $webhookUrl, $payload, $secret) {
-        $signature = generateHmacSignature($payload, $secret);
-
         $data = [
             'seller_id' => $sellerId,
             'transaction_id' => $transactionId,
             'transaction_type' => $transactionType,
             'webhook_url' => $webhookUrl,
             'payload' => json_encode($payload),
-            'signature' => $signature,
+            'signature' => $secret,
             'status' => 'pending',
             'next_retry_at' => date('Y-m-d H:i:s')
         ];

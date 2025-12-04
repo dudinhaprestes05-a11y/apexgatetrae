@@ -350,7 +350,7 @@ O sistema envia notificações para a URL configurada em cada seller.
 **Headers:**
 ```
 Content-Type: application/json
-X-Signature: hmac_sha256(payload, webhook_secret)
+X-Webhook-Secret: seu_webhook_secret
 X-Transaction-Id: transaction_id
 User-Agent: Gateway-PIX-Webhook/1.0
 ```
@@ -394,30 +394,67 @@ User-Agent: Gateway-PIX-Webhook/1.0
 
 ### Validar Webhook
 
-Sempre valide a assinatura HMAC:
+Sempre valide o webhook secret recebido:
 
 **PHP:**
 ```php
 $payload = file_get_contents('php://input');
-$signature = $_SERVER['HTTP_X_SIGNATURE'];
-$expectedSignature = hash_hmac('sha256', $payload, $webhookSecret);
+$receivedSecret = $_SERVER['HTTP_X_WEBHOOK_SECRET'] ?? '';
+$expectedSecret = 'seu_webhook_secret_configurado';
 
-if (!hash_equals($expectedSignature, $signature)) {
+if ($receivedSecret !== $expectedSecret) {
     http_response_code(401);
-    exit('Invalid signature');
+    exit('Invalid webhook secret');
 }
 
 $data = json_decode($payload, true);
+// Processar dados do webhook...
+```
+
+**Node.js:**
+```javascript
+app.post('/webhook', (req, res) => {
+    const receivedSecret = req.headers['x-webhook-secret'];
+    const expectedSecret = 'seu_webhook_secret_configurado';
+
+    if (receivedSecret !== expectedSecret) {
+        return res.status(401).send('Invalid webhook secret');
+    }
+
+    const data = req.body;
+    // Processar dados do webhook...
+    res.status(200).send('OK');
+});
+```
+
+**Python:**
+```python
+from flask import Flask, request
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    received_secret = request.headers.get('X-Webhook-Secret')
+    expected_secret = 'seu_webhook_secret_configurado'
+
+    if received_secret != expected_secret:
+        return 'Invalid webhook secret', 401
+
+    data = request.json
+    # Processar dados do webhook...
+    return 'OK', 200
 ```
 
 ### Retry Policy
 
-O sistema tenta reenviar webhooks falhados:
-- 1ª tentativa: Imediato
+O sistema tenta reenviar webhooks falhados automaticamente:
+- 1ª tentativa: Imediata (assim que o status muda)
 - 2ª tentativa: 1 minuto depois
 - 3ª tentativa: 5 minutos depois
 - 4ª tentativa: 15 minutos depois
 - 5ª tentativa: 1 hora depois
+- 6ª tentativa: 2 horas depois
+
+**Resposta esperada:** Retorne status HTTP 2xx (200-299) para confirmar o recebimento
 
 ---
 
