@@ -230,34 +230,34 @@ Content-Type: application/json</pre>
                                         <td class="p-3">Valor da cobrança (ex: 100.00)</td>
                                     </tr>
                                     <tr class="border-t border-slate-700">
-                                        <td class="p-3"><code class="text-blue-400">description</code></td>
-                                        <td class="p-3">string</td>
+                                        <td class="p-3"><code class="text-blue-400">customer</code></td>
+                                        <td class="p-3">object</td>
                                         <td class="p-3"><span class="text-slate-500">Não</span></td>
-                                        <td class="p-3">Descrição da cobrança</td>
+                                        <td class="p-3">Dados do cliente (name, document, email)</td>
                                     </tr>
                                     <tr class="border-t border-slate-700">
                                         <td class="p-3"><code class="text-blue-400">external_id</code></td>
                                         <td class="p-3">string</td>
                                         <td class="p-3"><span class="text-slate-500">Não</span></td>
-                                        <td class="p-3">ID externo para referência</td>
+                                        <td class="p-3">ID externo para referência (único)</td>
                                     </tr>
                                     <tr class="border-t border-slate-700">
-                                        <td class="p-3"><code class="text-blue-400">payer_name</code></td>
-                                        <td class="p-3">string</td>
+                                        <td class="p-3"><code class="text-blue-400">metadata</code></td>
+                                        <td class="p-3">object</td>
                                         <td class="p-3"><span class="text-slate-500">Não</span></td>
-                                        <td class="p-3">Nome do pagador</td>
+                                        <td class="p-3">Dados adicionais personalizados</td>
                                     </tr>
                                     <tr class="border-t border-slate-700">
-                                        <td class="p-3"><code class="text-blue-400">payer_document</code></td>
-                                        <td class="p-3">string</td>
+                                        <td class="p-3"><code class="text-blue-400">expires_in_minutes</code></td>
+                                        <td class="p-3">integer</td>
                                         <td class="p-3"><span class="text-slate-500">Não</span></td>
-                                        <td class="p-3">CPF/CNPJ do pagador</td>
+                                        <td class="p-3">Tempo de expiração em minutos (padrão: 60)</td>
                                     </tr>
                                     <tr class="border-t border-slate-700">
-                                        <td class="p-3"><code class="text-blue-400">callback_url</code></td>
+                                        <td class="p-3"><code class="text-blue-400">pix_type</code></td>
                                         <td class="p-3">string</td>
                                         <td class="p-3"><span class="text-slate-500">Não</span></td>
-                                        <td class="p-3">URL para webhook específico</td>
+                                        <td class="p-3">Tipo do PIX (padrão: dynamic)</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -274,10 +274,16 @@ Content-Type: application/json</pre>
   -H "Content-Type: application/json" \
   -d '{
     "amount": 150.00,
-    "description": "Pagamento de pedido #12345",
     "external_id": "pedido-12345",
-    "payer_name": "João Silva",
-    "payer_document": "12345678900"
+    "customer": {
+      "name": "João Silva",
+      "document": "12345678900",
+      "email": "joao@email.com"
+    },
+    "metadata": {
+      "order_id": "12345",
+      "product": "Plano Premium"
+    }
   }'</pre>
                         </div>
 
@@ -288,17 +294,18 @@ Content-Type: application/json</pre>
                             </button>
                             <pre>{
   "success": true,
+  "message": "PIX transaction created successfully",
   "data": {
-    "transaction_id": "TXN-20231204-ABC123",
+    "transaction_id": "CASHIN-20231204-ABC123",
     "amount": 150.00,
+    "fee_amount": 3.75,
+    "net_amount": 146.25,
     "status": "pending",
-    "qr_code": "00020101021126580014br.gov.bcb.pix...",
-    "qr_code_image": "data:image/png;base64,iVBORw0KGgo...",
-    "pix_key": "pix@exemplo.com.br",
-    "expires_at": "2023-12-04T18:30:00Z",
-    "created_at": "2023-12-04T17:30:00Z"
-  },
-  "message": "Cobrança PIX criada com sucesso"
+    "qrcode": "00020101021126580014br.gov.bcb.pix...",
+    "qrcode_base64": "data:image/png;base64,iVBORw0KGgo...",
+    "expires_at": "2023-12-04T18:30:00",
+    "external_id": "pedido-12345"
+  }
 }</pre>
                         </div>
                     </div>
@@ -308,7 +315,7 @@ Content-Type: application/json</pre>
                         <h3 class="text-xl font-semibold text-white mb-3">Consultar Status da Cobrança</h3>
                         <div class="mb-4">
                             <span class="endpoint-badge method-get">GET</span>
-                            <code class="ml-3 text-blue-400">/api/pix/status/{transaction_id}</code>
+                            <code class="ml-3 text-blue-400">/api/pix/consult?transaction_id={transaction_id}</code>
                         </div>
 
                         <h4 class="font-semibold text-white mb-2">Exemplo de Requisição</h4>
@@ -316,7 +323,7 @@ Content-Type: application/json</pre>
                             <button class="copy-btn" onclick="copyToClipboard(this)">
                                 <i class="fas fa-copy"></i> Copiar
                             </button>
-                            <pre>curl -X GET <?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] ?>/api/pix/status/TXN-20231204-ABC123 \
+                            <pre>curl -X GET "<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] ?>/api/pix/consult?transaction_id=CASHIN-20231204-ABC123" \
   -H "X-API-Key: sua_api_key" \
   -H "X-API-Secret: seu_api_secret"</pre>
                         </div>
@@ -329,14 +336,17 @@ Content-Type: application/json</pre>
                             <pre>{
   "success": true,
   "data": {
-    "transaction_id": "TXN-20231204-ABC123",
+    "transaction_id": "CASHIN-20231204-ABC123",
     "amount": 150.00,
+    "fee_amount": 3.75,
+    "net_amount": 146.25,
     "status": "completed",
-    "external_id": "pedido-12345",
-    "payer_name": "João Silva",
-    "payer_document": "12345678900",
-    "paid_at": "2023-12-04T17:45:00Z",
-    "created_at": "2023-12-04T17:30:00Z"
+    "qrcode": "00020101021126580014br.gov.bcb.pix...",
+    "qrcode_base64": "data:image/png;base64,iVBORw0KGgo...",
+    "paid_at": "2023-12-04 17:45:00",
+    "expires_at": "2023-12-04 18:30:00",
+    "created_at": "2023-12-04 17:30:00",
+    "external_id": "pedido-12345"
   }
 }</pre>
                         </div>
@@ -419,6 +429,18 @@ Content-Type: application/json</pre>
                                         <td class="p-3"><span class="text-green-400">Sim</span></td>
                                         <td class="p-3">CPF/CNPJ do beneficiário</td>
                                     </tr>
+                                    <tr class="border-t border-slate-700">
+                                        <td class="p-3"><code class="text-blue-400">external_id</code></td>
+                                        <td class="p-3">string</td>
+                                        <td class="p-3"><span class="text-slate-500">Não</span></td>
+                                        <td class="p-3">ID externo para referência (único)</td>
+                                    </tr>
+                                    <tr class="border-t border-slate-700">
+                                        <td class="p-3"><code class="text-blue-400">metadata</code></td>
+                                        <td class="p-3">object</td>
+                                        <td class="p-3"><span class="text-slate-500">Não</span></td>
+                                        <td class="p-3">Dados adicionais personalizados</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -448,17 +470,17 @@ Content-Type: application/json</pre>
                             </button>
                             <pre>{
   "success": true,
+  "message": "Cashout transaction created successfully",
   "data": {
     "transaction_id": "CASHOUT-20231204-XYZ789",
     "amount": 500.00,
-    "fee": 5.00,
-    "net_amount": 495.00,
+    "fee_amount": 5.00,
+    "total_charged": 505.00,
     "status": "processing",
     "pix_key": "joao.silva@email.com",
     "beneficiary_name": "João Silva",
-    "created_at": "2023-12-04T18:00:00Z"
-  },
-  "message": "Saque solicitado com sucesso"
+    "external_id": "saque-001"
+  }
 }</pre>
                         </div>
                     </div>
@@ -468,7 +490,7 @@ Content-Type: application/json</pre>
                         <h3 class="text-xl font-semibold text-white mb-3">Consultar Status do Saque</h3>
                         <div class="mb-4">
                             <span class="endpoint-badge method-get">GET</span>
-                            <code class="ml-3 text-blue-400">/api/cashout/status/{transaction_id}</code>
+                            <code class="ml-3 text-blue-400">/api/cashout/consult?transaction_id={transaction_id}</code>
                         </div>
 
                         <h4 class="font-semibold text-white mb-2">Exemplo de Requisição</h4>
@@ -476,7 +498,7 @@ Content-Type: application/json</pre>
                             <button class="copy-btn" onclick="copyToClipboard(this)">
                                 <i class="fas fa-copy"></i> Copiar
                             </button>
-                            <pre>curl -X GET <?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] ?>/api/cashout/status/CASHOUT-20231204-XYZ789 \
+                            <pre>curl -X GET "<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] ?>/api/cashout/consult?transaction_id=CASHOUT-20231204-XYZ789" \
   -H "X-API-Key: sua_api_key" \
   -H "X-API-Secret: seu_api_secret"</pre>
                         </div>
@@ -491,13 +513,14 @@ Content-Type: application/json</pre>
   "data": {
     "transaction_id": "CASHOUT-20231204-XYZ789",
     "amount": 500.00,
-    "fee": 5.00,
-    "net_amount": 495.00,
+    "fee_amount": 5.00,
+    "net_amount": 500.00,
     "status": "completed",
     "pix_key": "joao.silva@email.com",
     "beneficiary_name": "João Silva",
-    "processed_at": "2023-12-04T18:05:00Z",
-    "created_at": "2023-12-04T18:00:00Z"
+    "processed_at": "2023-12-04 18:05:00",
+    "created_at": "2023-12-04 18:00:00",
+    "external_id": "saque-001"
   }
 }</pre>
                         </div>
@@ -542,37 +565,27 @@ Content-Type: application/json</pre>
                                 <i class="fas fa-copy"></i> Copiar
                             </button>
                             <pre>{
-  "event": "pix.received",
-  "data": {
-    "transaction_id": "TXN-20231204-ABC123",
-    "amount": 150.00,
-    "status": "completed",
-    "external_id": "pedido-12345",
-    "payer_name": "João Silva",
-    "payer_document": "12345678900",
-    "paid_at": "2023-12-04T17:45:00Z",
-    "created_at": "2023-12-04T17:30:00Z"
-  },
-  "timestamp": "2023-12-04T17:45:01Z"
+  "type": "pix.cashin",
+  "transaction_id": "CASHIN-20231204-ABC123",
+  "external_id": "pedido-12345",
+  "status": "completed",
+  "amount": 150.00,
+  "paid_at": "2023-12-04 17:45:00"
 }</pre>
                         </div>
 
-                        <h4 class="font-semibold text-white mb-2 mt-4">Cobrança Expirada</h4>
+                        <h4 class="font-semibold text-white mb-2 mt-4">Cobrança Expirada (Cash-In)</h4>
                         <div class="code-block relative mb-4">
                             <button class="copy-btn" onclick="copyToClipboard(this)">
                                 <i class="fas fa-copy"></i> Copiar
                             </button>
                             <pre>{
-  "event": "pix.expired",
-  "data": {
-    "transaction_id": "TXN-20231204-ABC123",
-    "amount": 150.00,
-    "status": "expired",
-    "external_id": "pedido-12345",
-    "created_at": "2023-12-04T17:30:00Z",
-    "expired_at": "2023-12-04T18:30:00Z"
-  },
-  "timestamp": "2023-12-04T18:30:01Z"
+  "type": "pix.cashin",
+  "transaction_id": "CASHIN-20231204-ABC123",
+  "external_id": "pedido-12345",
+  "status": "expired",
+  "amount": 150.00,
+  "paid_at": null
 }</pre>
                         </div>
 
@@ -582,37 +595,27 @@ Content-Type: application/json</pre>
                                 <i class="fas fa-copy"></i> Copiar
                             </button>
                             <pre>{
-  "event": "cashout.completed",
-  "data": {
-    "transaction_id": "CASHOUT-20231204-XYZ789",
-    "amount": 500.00,
-    "fee": 5.00,
-    "net_amount": 495.00,
-    "status": "completed",
-    "pix_key": "joao.silva@email.com",
-    "beneficiary_name": "João Silva",
-    "processed_at": "2023-12-04T18:05:00Z",
-    "created_at": "2023-12-04T18:00:00Z"
-  },
-  "timestamp": "2023-12-04T18:05:01Z"
+  "type": "pix.cashout",
+  "transaction_id": "CASHOUT-20231204-XYZ789",
+  "external_id": "saque-001",
+  "status": "completed",
+  "net_amount": 500.00,
+  "fee": 5.00
 }</pre>
                         </div>
 
-                        <h4 class="font-semibold text-white mb-2 mt-4">Saque Falhou</h4>
+                        <h4 class="font-semibold text-white mb-2 mt-4">Saque Falhou (Cash-Out)</h4>
                         <div class="code-block relative mb-4">
                             <button class="copy-btn" onclick="copyToClipboard(this)">
                                 <i class="fas fa-copy"></i> Copiar
                             </button>
                             <pre>{
-  "event": "cashout.failed",
-  "data": {
-    "transaction_id": "CASHOUT-20231204-XYZ789",
-    "amount": 500.00,
-    "status": "failed",
-    "error_message": "Dados bancários inválidos",
-    "created_at": "2023-12-04T18:00:00Z"
-  },
-  "timestamp": "2023-12-04T18:05:01Z"
+  "type": "pix.cashout",
+  "transaction_id": "CASHOUT-20231204-XYZ789",
+  "external_id": "saque-001",
+  "status": "failed",
+  "net_amount": 500.00,
+  "fee": 5.00
 }</pre>
                         </div>
 
@@ -629,13 +632,34 @@ $payload = file_get_contents('php://input');
 $data = json_decode($payload, true);
 
 // Valide consultando a API
-$transactionId = $data['data']['transaction_id'];
-// Faça uma requisição GET para /api/pix/status/{transaction_id}
+$transactionId = $data['transaction_id'];
+$type = $data['type']; // 'pix.cashin' ou 'pix.cashout'
+
+// Faça uma requisição GET para:
+// - Cash-in: /api/pix/consult?transaction_id={transaction_id}
+// - Cash-out: /api/cashout/consult?transaction_id={transaction_id}
+
 // Compare os dados retornados com os dados do webhook
 
 // Responda com 200 OK
 http_response_code(200);
 echo json_encode(['success' => true]);</pre>
+                        </div>
+
+                        <h4 class="font-semibold text-white mb-2 mt-4">Status de Transações</h4>
+                        <p class="text-slate-300 mb-3 text-sm">
+                            Os webhooks são enviados para os seguintes status:
+                        </p>
+                        <div class="space-y-2">
+                            <div class="bg-green-900 bg-opacity-20 border border-green-700 rounded p-2 text-sm">
+                                <strong class="text-green-400">completed</strong> - Transação concluída com sucesso
+                            </div>
+                            <div class="bg-red-900 bg-opacity-20 border border-red-700 rounded p-2 text-sm">
+                                <strong class="text-red-400">failed</strong> - Transação falhou
+                            </div>
+                            <div class="bg-red-900 bg-opacity-20 border border-red-700 rounded p-2 text-sm">
+                                <strong class="text-red-400">expired</strong> - Cobrança expirou (apenas cash-in)
+                            </div>
                         </div>
                     </div>
                 </div>
