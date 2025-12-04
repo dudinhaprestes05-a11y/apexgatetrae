@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../models/SellerDocument.php';
 require_once __DIR__ . '/../../models/PixCashin.php';
 require_once __DIR__ . '/../../models/PixCashout.php';
 require_once __DIR__ . '/../../models/Notification.php';
+require_once __DIR__ . '/../../models/AcquirerAccount.php';
 require_once __DIR__ . '/../../services/FileUploadService.php';
 
 class SellerController {
@@ -14,6 +15,7 @@ class SellerController {
     private $cashinModel;
     private $cashoutModel;
     private $notificationModel;
+    private $accountModel;
     private $fileUploadService;
     private $sellerId;
 
@@ -25,6 +27,7 @@ class SellerController {
         $this->cashinModel = new PixCashin();
         $this->cashoutModel = new PixCashout();
         $this->notificationModel = new Notification();
+        $this->accountModel = new AcquirerAccount();
         $this->fileUploadService = new FileUploadService();
         $this->sellerId = CheckAuth::sellerId();
     }
@@ -193,6 +196,12 @@ class SellerController {
             $_SESSION['error'] = 'Transação não encontrada';
             header('Location: /seller/transactions');
             exit;
+        }
+
+        // Get account information if available
+        $account = null;
+        if (!empty($transaction['acquirer_account_id'])) {
+            $account = $this->accountModel->getAccountWithAcquirer($transaction['acquirer_account_id']);
         }
 
         require __DIR__ . '/../../views/seller/transaction-details.php';

@@ -91,6 +91,22 @@ require_once __DIR__ . '/../layouts/header.php';
                 </div>
             </div>
 
+            <?php if (isset($account) && $account): ?>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-4">Processador de Pagamento</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Adquirente</label>
+                        <p class="text-gray-900 mt-1"><?= htmlspecialchars($account['acquirer_name'] ?? 'N/A') ?></p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Conta</label>
+                        <p class="text-gray-900 mt-1"><?= htmlspecialchars($account['name'] ?? 'N/A') ?></p>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <?php if ($type === 'cashin' && isset($transaction['customer_name'])): ?>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h2 class="text-lg font-bold text-gray-900 mb-4">Dados do Cliente</h2>
