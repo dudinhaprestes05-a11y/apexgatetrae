@@ -92,24 +92,26 @@ require_once __DIR__ . '/../layouts/header.php';
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 pt-4 border-t border-gray-200">
-                <button onclick="manageAccounts(<?= $acquirer['id'] ?>, '<?= htmlspecialchars($acquirer['name']) ?>')" class="flex-1 bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:flex lg:items-center gap-2 pt-4 border-t border-gray-200">
+                <button onclick="manageAccounts(<?= $acquirer['id'] ?>, '<?= htmlspecialchars($acquirer['name']) ?>')" class="lg:flex-1 bg-green-50 hover:bg-green-100 text-green-700 px-3 md:px-4 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1 md:gap-2 text-xs md:text-sm">
                     <i class="fas fa-wallet"></i>
-                    Contas (<?= $acquirer['account_count'] ?>)
+                    <span class="hidden sm:inline">Contas (<?= $acquirer['account_count'] ?>)</span>
+                    <span class="sm:hidden">(<?= $acquirer['account_count'] ?>)</span>
                 </button>
-                <button onclick="editAcquirer(<?= $acquirer['id'] ?>)" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2">
+                <button onclick="editAcquirer(<?= $acquirer['id'] ?>)" class="lg:flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 md:px-4 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1 md:gap-2 text-xs md:text-sm">
                     <i class="fas fa-edit"></i>
-                    Editar
+                    <span class="hidden sm:inline">Editar</span>
                 </button>
-                <button onclick="toggleStatus(<?= $acquirer['id'] ?>, '<?= $acquirer['status'] ?>')" class="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2">
+                <button onclick="toggleStatus(<?= $acquirer['id'] ?>, '<?= $acquirer['status'] ?>')" class="lg:flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 px-3 md:px-4 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1 md:gap-2 text-xs md:text-sm">
                     <i class="fas fa-power-off"></i>
-                    <?= $acquirer['status'] === 'active' ? 'Desativar' : 'Ativar' ?>
+                    <span class="hidden sm:inline"><?= $acquirer['status'] === 'active' ? 'Desativar' : 'Ativar' ?></span>
                 </button>
-                <button onclick="resetDailyLimit(<?= $acquirer['id'] ?>)" class="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg font-medium transition flex items-center gap-2">
+                <button onclick="resetDailyLimit(<?= $acquirer['id'] ?>)" class="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 md:px-4 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1 md:gap-2 text-xs md:text-sm">
                     <i class="fas fa-redo"></i>
-                    Reset Diário
+                    <span class="hidden md:inline">Reset Diário</span>
+                    <span class="md:hidden">Reset</span>
                 </button>
-                <button onclick="deleteAcquirer(<?= $acquirer['id'] ?>, '<?= htmlspecialchars($acquirer['name']) ?>')" class="bg-red-50 hover:bg-red-100 text-red-700 px-4 py-2 rounded-lg font-medium transition flex items-center gap-2">
+                <button onclick="deleteAcquirer(<?= $acquirer['id'] ?>, '<?= htmlspecialchars($acquirer['name']) ?>')" class="bg-red-50 hover:bg-red-100 text-red-700 px-3 md:px-4 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1 text-xs md:text-sm">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
