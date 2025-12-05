@@ -162,7 +162,7 @@
 
                 <div class="flex items-center space-x-4">
                     <a href="/login" class="text-gray-300 hover:text-white transition text-sm md:text-base">Entrar</a>
-                    <a href="/register" class="btn-primary px-3 py-2 md:px-6 md:py-2 rounded-lg text-white font-medium text-sm md:text-base">
+                    <a href="/register" class="btn-primary px-4 py-1.5 md:px-6 md:py-2 rounded-lg text-white font-medium text-sm md:text-base whitespace-nowrap">
                         Começar Agora
                     </a>
                 </div>
