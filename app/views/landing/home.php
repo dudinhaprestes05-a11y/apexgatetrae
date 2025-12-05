@@ -152,7 +152,9 @@
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="#features" class="text-gray-300 hover:text-blue-400 transition">Recursos</a>
                     <a href="#how-it-works" class="text-gray-300 hover:text-blue-400 transition">Como Funciona</a>
-                    <a href="#pricing" class="text-gray-300 hover:text-blue-400 transition">Preços</a>
+                    <?php if (getenv('SHOW_PRICING_ON_LANDING') === 'true'): ?>
+                    <a href="#pricing" class="text-gray-300 hover:text-blue-400 transition">Taxas</a>
+                    <?php endif; ?>
                     <a href="#faq" class="text-gray-300 hover:text-blue-400 transition">FAQ</a>
                 </div>
 
@@ -400,22 +402,31 @@
     </section>
 
     <!-- Pricing Section -->
+    <?php if (getenv('SHOW_PRICING_ON_LANDING') === 'true'): ?>
     <section id="pricing" class="py-20 px-4 sm:px-6 lg:px-8">
         <div class="container mx-auto max-w-7xl">
             <div class="text-center mb-16">
                 <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
-                    Preços <span class="gradient-text">Transparentes</span>
+                    Taxas <span class="gradient-text">Transparentes</span>
                 </h2>
-                <p class="text-xl text-gray-400">Sem taxas ocultas, pague apenas pelo que usar</p>
+                <p class="text-xl text-gray-400">Sem custos ocultos, pague apenas pelo que usar</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                <div class="glass-card pricing-card p-8 rounded-2xl">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <div class="glass-card pricing-card p-8 rounded-2xl border-2 border-blue-500 relative">
+                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                        <span class="px-4 py-1 bg-blue-500 text-white rounded-full text-sm font-semibold">
+                            Padrão
+                        </span>
+                    </div>
                     <div class="text-center mb-8">
-                        <h3 class="text-2xl font-bold text-white mb-2">Starter</h3>
-                        <p class="text-gray-400 mb-6">Ideal para começar</p>
+                        <h3 class="text-2xl font-bold text-white mb-2">Taxa Padrão</h3>
+                        <p class="text-gray-400 mb-6">Para a maioria dos negócios</p>
                         <div class="mb-6">
-                            <span class="text-5xl font-bold text-white">1%</span>
+                            <span class="text-5xl font-bold gradient-text">A partir de</span>
+                        </div>
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold text-white">1%</span>
                             <span class="text-gray-400 text-lg"> + R$ 0,50</span>
                         </div>
                         <p class="text-sm text-gray-400">por transação PIX</p>
@@ -427,45 +438,11 @@
                         </li>
                         <li class="flex items-center text-gray-300">
                             <i class="fas fa-check-circle text-green-400 mr-3"></i>
-                            Dashboard básico
+                            Dashboard completo
                         </li>
                         <li class="flex items-center text-gray-300">
                             <i class="fas fa-check-circle text-green-400 mr-3"></i>
-                            Webhooks
-                        </li>
-                        <li class="flex items-center text-gray-300">
-                            <i class="fas fa-check-circle text-green-400 mr-3"></i>
-                            Suporte via email
-                        </li>
-                    </ul>
-                    <a href="/register" class="btn-secondary w-full px-6 py-3 rounded-xl text-white font-semibold text-center block">
-                        Começar Agora
-                    </a>
-                </div>
-
-                <div class="glass-card pricing-card p-8 rounded-2xl border-2 border-blue-500 relative">
-                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                        <span class="px-4 py-1 bg-blue-500 text-white rounded-full text-sm font-semibold">
-                            Mais Popular
-                        </span>
-                    </div>
-                    <div class="text-center mb-8">
-                        <h3 class="text-2xl font-bold text-white mb-2">Business</h3>
-                        <p class="text-gray-400 mb-6">Para empresas em crescimento</p>
-                        <div class="mb-6">
-                            <span class="text-5xl font-bold gradient-text">0.8%</span>
-                            <span class="text-gray-400 text-lg"> + R$ 0,40</span>
-                        </div>
-                        <p class="text-sm text-gray-400">por transação PIX</p>
-                    </div>
-                    <ul class="space-y-4 mb-8">
-                        <li class="flex items-center text-gray-300">
-                            <i class="fas fa-check-circle text-green-400 mr-3"></i>
-                            Tudo do Starter
-                        </li>
-                        <li class="flex items-center text-gray-300">
-                            <i class="fas fa-check-circle text-green-400 mr-3"></i>
-                            Dashboard avançado
+                            Webhooks em tempo real
                         </li>
                         <li class="flex items-center text-gray-300">
                             <i class="fas fa-check-circle text-green-400 mr-3"></i>
@@ -473,11 +450,11 @@
                         </li>
                         <li class="flex items-center text-gray-300">
                             <i class="fas fa-check-circle text-green-400 mr-3"></i>
-                            Suporte prioritário
+                            Split de pagamentos
                         </li>
                         <li class="flex items-center text-gray-300">
                             <i class="fas fa-check-circle text-green-400 mr-3"></i>
-                            Split de pagamentos
+                            Suporte técnico
                         </li>
                     </ul>
                     <a href="/register" class="btn-primary w-full px-6 py-3 rounded-xl text-white font-semibold text-center block">
@@ -490,14 +467,14 @@
                         <h3 class="text-2xl font-bold text-white mb-2">Enterprise</h3>
                         <p class="text-gray-400 mb-6">Para grandes volumes</p>
                         <div class="mb-6">
-                            <span class="text-5xl font-bold text-white">Custom</span>
+                            <span class="text-5xl font-bold text-white">A combinar</span>
                         </div>
-                        <p class="text-sm text-gray-400">preços personalizados</p>
+                        <p class="text-sm text-gray-400 mb-6">taxas personalizadas</p>
                     </div>
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-center text-gray-300">
                             <i class="fas fa-check-circle text-green-400 mr-3"></i>
-                            Tudo do Business
+                            Todos os recursos
                         </li>
                         <li class="flex items-center text-gray-300">
                             <i class="fas fa-check-circle text-green-400 mr-3"></i>
@@ -515,6 +492,10 @@
                             <i class="fas fa-check-circle text-green-400 mr-3"></i>
                             Integrações personalizadas
                         </li>
+                        <li class="flex items-center text-gray-300">
+                            <i class="fas fa-check-circle text-green-400 mr-3"></i>
+                            Suporte prioritário 24/7
+                        </li>
                     </ul>
                     <a href="/register" class="btn-secondary w-full px-6 py-3 rounded-xl text-white font-semibold text-center block">
                         Entre em Contato
@@ -523,6 +504,7 @@
             </div>
         </div>
     </section>
+    <?php endif; ?>
 
     <!-- FAQ Section -->
     <section id="faq" class="py-20 px-4 sm:px-6 lg:px-8 bg-slate-900 bg-opacity-50">
@@ -646,7 +628,9 @@
                     <h3 class="text-white font-semibold mb-4">Produto</h3>
                     <ul class="space-y-2">
                         <li><a href="#features" class="text-gray-400 hover:text-blue-400 transition text-sm">Recursos</a></li>
-                        <li><a href="#pricing" class="text-gray-400 hover:text-blue-400 transition text-sm">Preços</a></li>
+                        <?php if (getenv('SHOW_PRICING_ON_LANDING') === 'true'): ?>
+                        <li><a href="#pricing" class="text-gray-400 hover:text-blue-400 transition text-sm">Taxas</a></li>
+                        <?php endif; ?>
                         <li><a href="/docs/api" class="text-gray-400 hover:text-blue-400 transition text-sm">Documentação</a></li>
                         <li><a href="#faq" class="text-gray-400 hover:text-blue-400 transition text-sm">FAQ</a></li>
                     </ul>
