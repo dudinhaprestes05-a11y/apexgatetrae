@@ -47,8 +47,8 @@ define('PUBLIC_PATH', BASE_PATH . '/public');
 define('SESSION_LIFETIME', 7200);
 define('SESSION_NAME', 'GATEWAY_PIX_SESSION');
 
-define('API_RATE_LIMIT', 100);
-define('API_RATE_WINDOW', 60);
+define('API_RATE_LIMIT', getenv('API_RATE_LIMIT') ?: 100);
+define('API_RATE_WINDOW', getenv('API_RATE_WINDOW') ?: 60);
 
 define('WEBHOOK_MAX_RETRIES', 5);
 define('WEBHOOK_RETRY_DELAY', 60);
