@@ -8,6 +8,7 @@ unset($_SESSION['old_data']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro - <?= APP_NAME ?></title>
+    <link rel="icon" type="image/png" href="<?= FAVICON_URL ?>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -116,8 +117,11 @@ unset($_SESSION['old_data']);
 
         <!-- Logo and Title -->
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-400 rounded-2xl mb-4 logo-glow">
-                <i class="fas fa-bolt text-white text-2xl"></i>
+            <div class="inline-flex items-center justify-center mb-4">
+                <img src="<?= LOGO_URL ?>" alt="<?= APP_NAME ?>" class="h-16 w-auto object-contain logo-glow" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-400 rounded-2xl items-center justify-center logo-glow hidden">
+                    <i class="fas fa-bolt text-white text-2xl"></i>
+                </div>
             </div>
             <h1 class="text-3xl md:text-4xl font-bold text-white mb-2"><?= APP_NAME ?></h1>
             <p class="text-gray-400">Crie sua conta de seller</p>

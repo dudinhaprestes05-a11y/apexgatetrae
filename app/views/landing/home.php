@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= APP_NAME ?> - Gateway de Pagamentos PIX</title>
+    <link rel="icon" type="image/png" href="<?= FAVICON_URL ?>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -143,7 +144,8 @@
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 md:h-20">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-400 rounded-xl flex items-center justify-center">
+                    <img src="<?= LOGO_URL ?>" alt="<?= APP_NAME ?>" class="h-10 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-400 rounded-xl items-center justify-center hidden">
                         <i class="fas fa-bolt text-white text-xl"></i>
                     </div>
                     <span class="text-xl md:text-2xl font-bold text-white"><?= APP_NAME ?></span>
@@ -622,7 +624,8 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                 <div>
                     <div class="flex items-center space-x-3 mb-4">
-                        <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-400 rounded-xl flex items-center justify-center">
+                        <img src="<?= LOGO_URL ?>" alt="<?= APP_NAME ?>" class="h-10 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-400 rounded-xl items-center justify-center hidden">
                             <i class="fas fa-bolt text-white text-xl"></i>
                         </div>
                         <span class="text-xl font-bold text-white"><?= APP_NAME ?></span>

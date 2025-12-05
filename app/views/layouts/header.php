@@ -13,6 +13,7 @@ $currentPath = $_SERVER['REQUEST_URI'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle) ?> - <?= APP_NAME ?></title>
+    <link rel="icon" type="image/png" href="<?= FAVICON_URL ?>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -304,7 +305,8 @@ $currentPath = $_SERVER['REQUEST_URI'];
         <!-- Logo -->
         <div class="p-6 border-b border-slate-700">
             <a href="<?= $user && $user['role'] === 'admin' ? '/admin/dashboard' : '/seller/dashboard' ?>" class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <img src="<?= LOGO_URL ?>" alt="<?= APP_NAME ?>" class="h-10 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl items-center justify-center shadow-lg hidden">
                     <i class="fas fa-bolt text-white"></i>
                 </div>
                 <div>

@@ -70,5 +70,8 @@ $allowed_ips = [
 
 define('ALLOWED_IPS', $allowed_ips);
 
+define('LOGO_URL', getenv('LOGO_URL') ?: 'https://via.placeholder.com/150x50/3b82f6/ffffff?text=Logo');
+define('FAVICON_URL', getenv('FAVICON_URL') ?: 'https://via.placeholder.com/32x32/3b82f6/ffffff?text=F');
+
 ini_set('display_errors', APP_ENV === 'development' ? '1' : '0');
 error_reporting(APP_ENV === 'development' ? E_ALL : E_ERROR);
