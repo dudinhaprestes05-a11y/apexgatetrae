@@ -4,9 +4,9 @@ require_once __DIR__ . '/../layouts/header.php';
 ?>
 
 <div class="max-w-4xl">
-    <div class="card p-6 mb-6">
-        <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
-            <i class="fas fa-cog text-blue-500 mr-3"></i>
+    <div class="card p-4 md:p-6 mb-4 md:mb-6">
+        <h2 class="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6 flex items-center">
+            <i class="fas fa-cog text-blue-500 mr-2 md:mr-3"></i>
             Configurações Gerais
         </h2>
 
@@ -109,9 +109,9 @@ require_once __DIR__ . '/../layouts/header.php';
                 </div>
             </div>
 
-            <div class="flex items-center justify-between mt-6 pt-6 border-t border-slate-700">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-6 pt-6 border-t border-slate-700">
                 <?php if ($settings['updated_at']): ?>
-                <div class="text-sm text-slate-400">
+                <div class="text-xs sm:text-sm text-slate-400">
                     <i class="fas fa-clock mr-1"></i>
                     Última atualização: <?= date('d/m/Y H:i', strtotime($settings['updated_at'])) ?>
                 </div>
@@ -119,7 +119,7 @@ require_once __DIR__ . '/../layouts/header.php';
                 <div></div>
                 <?php endif; ?>
 
-                <button type="submit" class="btn-primary px-8 py-3 rounded-lg font-medium">
+                <button type="submit" class="w-full sm:w-auto btn-primary px-8 py-3 rounded-lg font-medium text-sm md:text-base">
                     <i class="fas fa-save mr-2"></i>Salvar Configurações
                 </button>
             </div>

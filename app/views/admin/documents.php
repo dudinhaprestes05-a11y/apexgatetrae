@@ -18,29 +18,29 @@ $docLabels = [
 ?>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Documentos</h1>
-        <p class="text-gray-600 mt-2">Analise e aprove documentos dos sellers</p>
+    <div class="mb-6 md:mb-8">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Documentos</h1>
+        <p class="text-sm md:text-base text-gray-600 mt-2">Analise e aprove documentos dos sellers</p>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div class="flex items-center gap-3">
-            <a href="/admin/documents?status=pending" class="px-4 py-2 rounded-lg text-sm font-medium transition <?= $status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' ?>">
-                <i class="fas fa-clock mr-2"></i>Pendentes
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4 md:mb-6">
+        <div class="grid grid-cols-2 md:flex md:items-center gap-2 md:gap-3">
+            <a href="/admin/documents?status=pending" class="px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition text-center <?= $status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' ?>">
+                <i class="fas fa-clock mr-1 md:mr-2"></i><span class="hidden sm:inline">Pendentes</span><span class="sm:hidden">Pend.</span>
             </a>
-            <a href="/admin/documents?status=under_review" class="px-4 py-2 rounded-lg text-sm font-medium transition <?= $status === 'under_review' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' ?>">
-                <i class="fas fa-eye mr-2"></i>Em Análise
+            <a href="/admin/documents?status=under_review" class="px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition text-center <?= $status === 'under_review' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' ?>">
+                <i class="fas fa-eye mr-1 md:mr-2"></i><span class="hidden sm:inline">Em Análise</span><span class="sm:hidden">Análise</span>
             </a>
-            <a href="/admin/documents?status=approved" class="px-4 py-2 rounded-lg text-sm font-medium transition <?= $status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' ?>">
-                <i class="fas fa-check mr-2"></i>Aprovados
+            <a href="/admin/documents?status=approved" class="px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition text-center <?= $status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' ?>">
+                <i class="fas fa-check mr-1 md:mr-2"></i><span class="hidden sm:inline">Aprovados</span><span class="sm:hidden">Aprov.</span>
             </a>
-            <a href="/admin/documents?status=rejected" class="px-4 py-2 rounded-lg text-sm font-medium transition <?= $status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' ?>">
-                <i class="fas fa-times mr-2"></i>Rejeitados
+            <a href="/admin/documents?status=rejected" class="px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition text-center <?= $status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' ?>">
+                <i class="fas fa-times mr-1 md:mr-2"></i><span class="hidden sm:inline">Rejeitados</span><span class="sm:hidden">Rejeit.</span>
             </a>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <?php if (empty($documentsWithSeller)): ?>
         <div class="col-span-full bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
             <i class="fas fa-file-alt text-gray-400 text-5xl mb-4"></i>

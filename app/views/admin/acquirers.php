@@ -4,28 +4,28 @@ require_once __DIR__ . '/../layouts/header.php';
 ?>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="mb-8 flex items-center justify-between">
+    <div class="mb-6 md:mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Adquirentes</h1>
-            <p class="text-gray-600 mt-2">Gerenciar adquirentes/PSPs integrados</p>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Adquirentes</h1>
+            <p class="text-sm md:text-base text-gray-600 mt-2">Gerenciar adquirentes/PSPs integrados</p>
         </div>
-        <button onclick="openCreateModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition flex items-center gap-2">
+        <button onclick="openCreateModal()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 text-sm md:text-base whitespace-nowrap">
             <i class="fas fa-plus"></i>
             Nova Adquirente
         </button>
     </div>
 
-    <div class="mb-6 flex gap-3">
-        <button onclick="filterByStatus('all')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition bg-blue-100 text-blue-800">
+    <div class="mb-4 md:mb-6 grid grid-cols-2 md:flex gap-2 md:gap-3">
+        <button onclick="filterByStatus('all')" class="filter-btn px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition bg-blue-100 text-blue-800">
             Todas
         </button>
-        <button onclick="filterByStatus('active')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition bg-gray-100 text-gray-700 hover:bg-gray-200">
+        <button onclick="filterByStatus('active')" class="filter-btn px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition bg-gray-100 text-gray-700 hover:bg-gray-200">
             Ativas
         </button>
-        <button onclick="filterByStatus('inactive')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition bg-gray-100 text-gray-700 hover:bg-gray-200">
+        <button onclick="filterByStatus('inactive')" class="filter-btn px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition bg-gray-100 text-gray-700 hover:bg-gray-200">
             Inativas
         </button>
-        <button onclick="filterByStatus('maintenance')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition bg-gray-100 text-gray-700 hover:bg-gray-200">
+        <button onclick="filterByStatus('maintenance')" class="filter-btn px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition bg-gray-100 text-gray-700 hover:bg-gray-200">
             Manutenção
         </button>
     </div>

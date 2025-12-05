@@ -13,27 +13,27 @@ $statusColors = [
 ?>
 
 <!-- Header -->
-<div class="flex items-center justify-between mb-8">
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-8 gap-4">
     <div>
         <a href="/admin/sellers" class="text-blue-400 hover:text-blue-300 text-sm mb-3 inline-flex items-center">
             <i class="fas fa-arrow-left mr-2"></i>Voltar
         </a>
-        <h2 class="text-3xl font-bold text-white mt-2 flex items-center">
+        <h2 class="text-2xl md:text-3xl font-bold text-white mt-2 flex flex-wrap items-center gap-2">
             <?= htmlspecialchars($seller['name']) ?>
-            <span class="badge <?= $statusColors[$seller['status']] ?? 'badge' ?> ml-3 text-sm">
+            <span class="badge <?= $statusColors[$seller['status']] ?? 'badge' ?> text-xs md:text-sm">
                 <?= ucfirst($seller['status']) ?>
             </span>
         </h2>
-        <p class="text-slate-400 mt-1"><?= htmlspecialchars($seller['email']) ?></p>
+        <p class="text-slate-400 mt-1 text-sm md:text-base"><?= htmlspecialchars($seller['email']) ?></p>
     </div>
     <?php if ($seller['status'] === 'pending'): ?>
-    <div class="flex space-x-3">
-        <form method="POST" action="/admin/sellers/<?= $seller['id'] ?>/approve" class="inline">
-            <button type="submit" class="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition">
+    <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+        <form method="POST" action="/admin/sellers/<?= $seller['id'] ?>/approve" class="w-full sm:w-auto">
+            <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm md:text-base">
                 <i class="fas fa-check mr-2"></i>Aprovar
             </button>
         </form>
-        <button onclick="openRejectModal()" class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">
+        <button onclick="openRejectModal()" class="w-full sm:w-auto px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition text-sm md:text-base">
             <i class="fas fa-times mr-2"></i>Rejeitar
         </button>
     </div>
@@ -404,12 +404,12 @@ $statusColors = [
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between pt-4 border-t border-slate-700">
-                    <div class="text-sm text-slate-400">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-700">
+                    <div class="text-xs sm:text-sm text-slate-400">
                         <i class="fas fa-info-circle mr-1"></i>
                         As taxas e retenções são aplicadas automaticamente
                     </div>
-                    <button type="submit" class="btn-primary px-6 py-2.5 rounded-lg font-medium">
+                    <button type="submit" class="w-full sm:w-auto btn-primary px-6 py-2.5 rounded-lg font-medium text-sm">
                         <i class="fas fa-save mr-2"></i>Salvar Configurações
                     </button>
                 </div>
@@ -515,12 +515,12 @@ $statusColors = [
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between pt-4 border-t border-slate-700">
-                    <div class="text-sm text-slate-400">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-700">
+                    <div class="text-xs sm:text-sm text-slate-400">
                         <i class="fas fa-info-circle mr-1"></i>
                         Limites são validados em cada transação
                     </div>
-                    <button type="submit" class="btn-primary px-6 py-2.5 rounded-lg font-medium">
+                    <button type="submit" class="w-full sm:w-auto btn-primary px-6 py-2.5 rounded-lg font-medium text-sm">
                         <i class="fas fa-save mr-2"></i>Salvar Limites
                     </button>
                 </div>
@@ -529,15 +529,15 @@ $statusColors = [
 
         <!-- Processing Accounts -->
         <div class="card p-6">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold text-white flex items-center">
-                    <i class="fas fa-wallet text-green-500 mr-2"></i>
-                    Contas de Processamento
-                    <span class="text-sm text-slate-400 ml-3 font-normal">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <h3 class="text-lg md:text-xl font-bold text-white flex flex-wrap items-center gap-2">
+                    <i class="fas fa-wallet text-green-500"></i>
+                    <span>Contas de Processamento</span>
+                    <span class="text-xs md:text-sm text-slate-400 font-normal">
                         <?= isset($accounts) ? count($accounts) : 0 ?> conta(s)
                     </span>
                 </h3>
-                <button onclick="openAddAccountModal()" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium">
+                <button onclick="openAddAccountModal()" class="w-full sm:w-auto btn-primary px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap">
                     <i class="fas fa-plus mr-2"></i>Adicionar Conta
                 </button>
             </div>

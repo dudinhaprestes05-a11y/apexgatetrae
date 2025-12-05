@@ -4,23 +4,23 @@ require_once __DIR__ . '/../layouts/header.php';
 ?>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="mb-8">
+    <div class="mb-6 md:mb-8">
         <a href="/admin/acquirers" class="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block">
             <i class="fas fa-arrow-left mr-1"></i>Voltar para Adquirentes
         </a>
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Contas - <?= htmlspecialchars($acquirer['name']) ?></h1>
-                <p class="text-gray-600 mt-2">Gerenciar múltiplas contas para distribuição de transações</p>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Contas - <?= htmlspecialchars($acquirer['name']) ?></h1>
+                <p class="text-sm md:text-base text-gray-600 mt-2">Gerenciar múltiplas contas para distribuição de transações</p>
             </div>
-            <button onclick="openCreateModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition flex items-center gap-2">
+            <button onclick="openCreateModal()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 text-sm md:text-base whitespace-nowrap">
                 <i class="fas fa-plus"></i>
                 Nova Conta
             </button>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm font-medium text-gray-600">Total de Contas</h3>

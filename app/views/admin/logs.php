@@ -6,38 +6,42 @@ $category = $_GET['category'] ?? '';
 ?>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Logs do Sistema</h1>
-        <p class="text-gray-600 mt-2">Monitore a atividade e erros do sistema</p>
+    <div class="mb-6 md:mb-8">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Logs do Sistema</h1>
+        <p class="text-sm md:text-base text-gray-600 mt-2">Monitore a atividade e erros do sistema</p>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <form method="GET" action="/admin/logs" class="flex items-end gap-4">
-            <div class="flex-1">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Nível</label>
-                <select name="level" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                    <option value="">Todos</option>
-                    <option value="debug" <?= $level === 'debug' ? 'selected' : '' ?>>Debug</option>
-                    <option value="info" <?= $level === 'info' ? 'selected' : '' ?>>Info</option>
-                    <option value="warning" <?= $level === 'warning' ? 'selected' : '' ?>>Warning</option>
-                    <option value="error" <?= $level === 'error' ? 'selected' : '' ?>>Error</option>
-                    <option value="critical" <?= $level === 'critical' ? 'selected' : '' ?>>Critical</option>
-                </select>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4 md:mb-6">
+        <form method="GET" action="/admin/logs" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nível</label>
+                    <select name="level" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">
+                        <option value="">Todos</option>
+                        <option value="debug" <?= $level === 'debug' ? 'selected' : '' ?>>Debug</option>
+                        <option value="info" <?= $level === 'info' ? 'selected' : '' ?>>Info</option>
+                        <option value="warning" <?= $level === 'warning' ? 'selected' : '' ?>>Warning</option>
+                        <option value="error" <?= $level === 'error' ? 'selected' : '' ?>>Error</option>
+                        <option value="critical" <?= $level === 'critical' ? 'selected' : '' ?>>Critical</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
+                    <select name="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">
+                        <option value="">Todas</option>
+                        <option value="auth" <?= $category === 'auth' ? 'selected' : '' ?>>Autenticação</option>
+                        <option value="pix" <?= $category === 'pix' ? 'selected' : '' ?>>PIX</option>
+                        <option value="cashout" <?= $category === 'cashout' ? 'selected' : '' ?>>Cashout</option>
+                        <option value="webhook" <?= $category === 'webhook' ? 'selected' : '' ?>>Webhook</option>
+                        <option value="system" <?= $category === 'system' ? 'selected' : '' ?>>Sistema</option>
+                    </select>
+                </div>
             </div>
-            <div class="flex-1">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
-                <select name="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                    <option value="">Todas</option>
-                    <option value="auth" <?= $category === 'auth' ? 'selected' : '' ?>>Autenticação</option>
-                    <option value="pix" <?= $category === 'pix' ? 'selected' : '' ?>>PIX</option>
-                    <option value="cashout" <?= $category === 'cashout' ? 'selected' : '' ?>>Cashout</option>
-                    <option value="webhook" <?= $category === 'webhook' ? 'selected' : '' ?>>Webhook</option>
-                    <option value="system" <?= $category === 'system' ? 'selected' : '' ?>>Sistema</option>
-                </select>
+            <div>
+                <button type="submit" class="w-full md:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+                    <i class="fas fa-filter mr-2"></i>Filtrar
+                </button>
             </div>
-            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                <i class="fas fa-filter mr-2"></i>Filtrar
-            </button>
         </form>
     </div>
 
@@ -49,11 +53,11 @@ $category = $_GET['category'] ?? '';
         </div>
         <?php else: ?>
         <?php foreach ($logs as $log): ?>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
-                    <div class="flex items-center gap-3 mb-2">
-                        <span class="px-3 py-1 text-xs font-medium rounded-full
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                        <span class="px-2 md:px-3 py-1 text-xs font-medium rounded-full
                             <?php
                             echo match($log['level']) {
                                 'critical' => 'bg-red-100 text-red-800',
@@ -70,10 +74,11 @@ $category = $_GET['category'] ?? '';
                             <?= ucfirst($log['category']) ?>
                         </span>
                         <span class="text-xs text-gray-500">
-                            <?= date('d/m/Y H:i:s', strtotime($log['created_at'])) ?>
+                            <span class="hidden sm:inline"><?= date('d/m/Y H:i:s', strtotime($log['created_at'])) ?></span>
+                            <span class="sm:hidden"><?= date('d/m H:i', strtotime($log['created_at'])) ?></span>
                         </span>
                     </div>
-                    <p class="text-gray-900 font-medium mb-2"><?= htmlspecialchars($log['message']) ?></p>
+                    <p class="text-sm md:text-base text-gray-900 font-medium mb-2"><?= htmlspecialchars($log['message']) ?></p>
                     <?php if ($log['context']): ?>
                     <details class="mt-3">
                         <summary class="text-sm text-blue-600 cursor-pointer hover:text-blue-800">Ver contexto</summary>
