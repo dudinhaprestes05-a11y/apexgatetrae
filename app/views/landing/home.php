@@ -157,8 +157,8 @@
                 </div>
 
                 <div class="flex items-center space-x-4">
-                    <a href="/login" class="text-gray-300 hover:text-white transition">Entrar</a>
-                    <a href="/register" class="btn-primary px-6 py-2 rounded-lg text-white font-medium">
+                    <a href="/login" class="text-gray-300 hover:text-white transition text-sm md:text-base">Entrar</a>
+                    <a href="/register" class="btn-primary px-3 py-2 md:px-6 md:py-2 rounded-lg text-white font-medium text-sm md:text-base">
                         Começar Agora
                     </a>
                 </div>
@@ -183,14 +183,14 @@
                         Integre pagamentos PIX em minutos com nossa API moderna e segura. Receba pagamentos e faça transferências com agilidade e transparência.
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4">
-                        <a href="/register" class="btn-primary px-8 py-4 rounded-xl text-white font-semibold text-center">
+                        <a href="/register" class="btn-primary px-6 py-3 sm:px-8 sm:py-4 rounded-xl text-white font-semibold text-center text-sm sm:text-base">
                             <i class="fas fa-rocket mr-2"></i>Começar Gratuitamente
                         </a>
-                        <a href="#how-it-works" class="btn-secondary px-8 py-4 rounded-xl text-white font-semibold text-center">
+                        <a href="#how-it-works" class="btn-secondary px-6 py-3 sm:px-8 sm:py-4 rounded-xl text-white font-semibold text-center text-sm sm:text-base">
                             <i class="fas fa-play-circle mr-2"></i>Como Funciona
                         </a>
                     </div>
-                    <div class="mt-8 flex items-center space-x-8 text-sm text-gray-400">
+                    <div class="mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-8 text-xs sm:text-sm text-gray-400">
                         <div class="flex items-center">
                             <i class="fas fa-check-circle text-green-400 mr-2"></i>
                             Integração em 5 minutos
@@ -614,10 +614,10 @@
                         Junte-se a centenas de empresas que já processam pagamentos PIX com nossa plataforma
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a href="/register" class="btn-primary px-10 py-4 rounded-xl text-white font-semibold text-lg">
+                        <a href="/register" class="btn-primary px-6 py-3 sm:px-10 sm:py-4 rounded-xl text-white font-semibold text-base sm:text-lg">
                             <i class="fas fa-rocket mr-2"></i>Criar Conta Gratuita
                         </a>
-                        <a href="/docs/api" class="btn-secondary px-10 py-4 rounded-xl text-white font-semibold text-lg">
+                        <a href="/docs/api" class="btn-secondary px-6 py-3 sm:px-10 sm:py-4 rounded-xl text-white font-semibold text-base sm:text-lg">
                             <i class="fas fa-book mr-2"></i>Ver Documentação
                         </a>
                     </div>

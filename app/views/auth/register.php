@@ -21,6 +21,7 @@ unset($_SESSION['old_data']);
         body {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
             min-height: 100vh;
+            padding-bottom: 2rem;
         }
 
         .glass-card {
@@ -97,7 +98,7 @@ unset($_SESSION['old_data']);
         }
     </style>
 </head>
-<body class="flex items-center justify-center p-4 py-12 relative overflow-hidden">
+<body class="flex justify-center p-4 py-12 relative overflow-hidden">
 
     <!-- Background Particles -->
     <div class="absolute top-20 left-20 w-32 h-32 bg-blue-500 rounded-full opacity-10 blur-3xl particle floating"></div>

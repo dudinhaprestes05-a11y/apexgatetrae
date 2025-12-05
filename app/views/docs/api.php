@@ -89,9 +89,51 @@
         .section {
             scroll-margin-top: 2rem;
         }
+        .mobile-menu-btn {
+            display: none;
+        }
+        @media (max-width: 1023px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                height: 100vh;
+                width: 280px;
+                z-index: 50;
+                transition: left 0.3s ease;
+                max-height: 100vh;
+            }
+            .sidebar.open {
+                left: 0;
+            }
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 40;
+            }
+            .sidebar-overlay.open {
+                display: block;
+            }
+        }
     </style>
 </head>
 <body class="text-slate-200">
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn fixed top-4 left-4 z-50 bg-slate-800 text-white p-3 rounded-lg border border-slate-700" onclick="toggleSidebar()">
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
     <div class="container mx-auto px-4 py-8">
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <!-- Sidebar -->
@@ -766,6 +808,13 @@ echo json_encode(['success' => true]);</pre>
             });
         }
 
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+
         // Smooth scroll para links âncora
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
@@ -776,6 +825,10 @@ echo json_encode(['success' => true]);</pre>
                         behavior: 'smooth',
                         block: 'start'
                     });
+                }
+                // Fecha o menu mobile após clicar
+                if (window.innerWidth < 1024) {
+                    toggleSidebar();
                 }
             });
         });
