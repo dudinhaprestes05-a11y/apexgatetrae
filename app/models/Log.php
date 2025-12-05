@@ -5,7 +5,29 @@ require_once __DIR__ . '/BaseModel.php';
 class Log extends BaseModel {
     protected $table = 'logs';
 
+    private $logLevels = [
+        'debug' => 1,
+        'info' => 2,
+        'warning' => 3,
+        'error' => 4,
+        'critical' => 5
+    ];
+
+    private function shouldLog($level) {
+        $configuredLevel = strtolower(getenv('LOG_LEVEL') ?: LOG_LEVEL);
+
+        if (!isset($this->logLevels[$level]) || !isset($this->logLevels[$configuredLevel])) {
+            return true;
+        }
+
+        return $this->logLevels[$level] >= $this->logLevels[$configuredLevel];
+    }
+
     public function log($level, $category, $message, $context = null, $userId = null, $sellerId = null) {
+        if (!$this->shouldLog($level)) {
+            return false;
+        }
+
         $data = [
             'level' => $level,
             'category' => $category,

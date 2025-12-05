@@ -55,7 +55,7 @@ define('WEBHOOK_RETRY_DELAY', 60);
 
 define('PIX_EXPIRATION_MINUTES', 30);
 
-define('LOG_LEVEL', APP_ENV === 'production' ? 'warning' : 'debug');
+define('LOG_LEVEL', getenv('LOG_LEVEL') ?: (APP_ENV === 'production' ? 'warning' : 'debug'));
 define('LOG_PATH', BASE_PATH . '/logs');
 
 define('TIMEZONE', 'America/Sao_Paulo');
