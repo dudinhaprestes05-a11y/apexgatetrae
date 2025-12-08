@@ -229,8 +229,197 @@ require_once __DIR__ . '/../layouts/header.php';
                 </div>
             </div>
             <?php endif; ?>
+
+            <?php if ($type === 'cashout' && isset($transaction['receipt_url']) && $transaction['receipt_url']): ?>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="font-bold text-gray-900 mb-4">Comprovante</h3>
+                <p class="text-sm text-gray-600 mb-4">Visualize o comprovante PDF sem sair da página.</p>
+                <button id="openPdfViewerBtn"
+                        data-url="<?= htmlspecialchars($transaction['receipt_url']) ?>"
+                        class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                    <i class="fas fa-file-pdf mr-2"></i>Ver Comprovante (PDF)
+                </button>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
 
+<div id="pdfViewerModal" class="modal hidden">
+    <div class="modal-content max-w-6xl w-full">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-white">Comprovante PIX</h3>
+            <button id="closePdfViewerBtn" class="px-3 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center space-x-2">
+                <button id="prevPageBtn" class="px-3 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600"><i class="fas fa-chevron-left"></i></button>
+                <button id="nextPageBtn" class="px-3 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600"><i class="fas fa-chevron-right"></i></button>
+                <span id="pageIndicator" class="ml-2 text-slate-300 text-sm">Página <span id="pageNum">1</span>/<span id="pageCount">1</span></span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="zoomOutBtn" class="px-3 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600"><i class="fas fa-search-minus"></i></button>
+                <button id="zoomInBtn" class="px-3 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600"><i class="fas fa-search-plus"></i></button>
+            </div>
+        </div>
+        <div id="pdfContainer" class="relative bg-slate-800 rounded-lg border border-slate-700 h-[75vh] overflow-auto">
+            <div id="pdfLoader" class="absolute inset-0 flex items-center justify-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+            <div id="pdfError" class="hidden absolute inset-0 flex items-center justify-center">
+                <div class="alert alert-error">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Não foi possível carregar o PDF. Tente novamente.</span>
+                    </div>
+                </div>
+            </div>
+            <canvas id="pdfCanvas" class="mx-auto block"></canvas>
+            <iframe id="pdfIframeFallback" class="hidden w-full h-full"></iframe>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js"></script>
+<script>
+    const openBtn = document.getElementById('openPdfViewerBtn');
+    const modal = document.getElementById('pdfViewerModal');
+    const closeBtn = document.getElementById('closePdfViewerBtn');
+    const loader = document.getElementById('pdfLoader');
+    const errorBox = document.getElementById('pdfError');
+    const canvas = document.getElementById('pdfCanvas');
+    const ctx = canvas ? canvas.getContext('2d') : null;
+    const iframeFallback = document.getElementById('pdfIframeFallback');
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const pageNumEl = document.getElementById('pageNum');
+    const pageCountEl = document.getElementById('pageCount');
+    let pdfDoc = null;
+    let pageNum = 1;
+    let pageRendering = false;
+    let pageNumPending = null;
+    let scale = 1.0;
+    let pdfUrl = null;
+
+    function openModal() {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+        pdfDoc = null;
+        pageNum = 1;
+        pageNumPending = null;
+        scale = 1.0;
+        loader.classList.add('hidden');
+        errorBox.classList.add('hidden');
+        iframeFallback.classList.add('hidden');
+    }
+
+    function renderPage(num) {
+        pageRendering = true;
+        pdfDoc.getPage(num).then(function(page) {
+            const viewport = page.getViewport({ scale });
+            const containerWidth = document.getElementById('pdfContainer').clientWidth;
+            const ratio = Math.min(containerWidth / viewport.width, 1);
+            const vp = page.getViewport({ scale: scale * ratio });
+            canvas.width = vp.width;
+            canvas.height = vp.height;
+            const renderContext = { canvasContext: ctx, viewport: vp };
+            const renderTask = page.render(renderContext);
+            renderTask.promise.then(function() {
+                pageRendering = false;
+                if (pageNumPending !== null) {
+                    renderPage(pageNumPending);
+                    pageNumPending = null;
+                }
+                loader.classList.add('hidden');
+            });
+        }).catch(function() {
+            errorBox.classList.remove('hidden');
+            loader.classList.add('hidden');
+        });
+        pageNumEl.textContent = num;
+    }
+
+    function queueRenderPage(num) {
+        if (pageRendering) {
+            pageNumPending = num;
+        } else {
+            renderPage(num);
+        }
+    }
+
+    function onPrevPage() {
+        if (pageNum <= 1) return;
+        pageNum--;
+        queueRenderPage(pageNum);
+    }
+
+    function onNextPage() {
+        if (!pdfDoc) return;
+        if (pageNum >= pdfDoc.numPages) return;
+        pageNum++;
+        queueRenderPage(pageNum);
+    }
+
+    function onZoom(delta) {
+        scale = Math.max(0.5, Math.min(3.0, scale + delta));
+        queueRenderPage(pageNum);
+    }
+
+    function initPdf(url) {
+        loader.classList.remove('hidden');
+        errorBox.classList.add('hidden');
+        iframeFallback.classList.add('hidden');
+        if (!window['pdfjsLib']) {
+            iframeFallback.src = url;
+            iframeFallback.classList.remove('hidden');
+            loader.classList.add('hidden');
+            return;
+        }
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.js';
+        pdfjsLib.getDocument({ url }).promise.then(function(pdf) {
+            pdfDoc = pdf;
+            pageCountEl.textContent = pdf.numPages;
+            renderPage(1);
+        }).catch(function() {
+            iframeFallback.src = url;
+            iframeFallback.classList.remove('hidden');
+            loader.classList.add('hidden');
+        });
+    }
+
+    if (openBtn) {
+        openBtn.addEventListener('click', function() {
+            pdfUrl = this.getAttribute('data-url');
+            openModal();
+            initPdf(pdfUrl);
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            closeModal();
+        });
+    }
+
+    if (prevBtn) prevBtn.addEventListener('click', onPrevPage);
+    if (nextBtn) nextBtn.addEventListener('click', onNextPage);
+    if (zoomInBtn) zoomInBtn.addEventListener('click', function(){ onZoom(0.2); });
+    if (zoomOutBtn) zoomOutBtn.addEventListener('click', function(){ onZoom(-0.2); });
+
+    document.addEventListener('keydown', function(e) {
+        if (modal.classList.contains('hidden')) return;
+        if (e.key === 'Escape') closeModal();
+        if (e.key === 'ArrowLeft') onPrevPage();
+        if (e.key === 'ArrowRight') onNextPage();
+        if ((e.ctrlKey || e.metaKey) && e.key === '=') onZoom(0.2);
+        if ((e.ctrlKey || e.metaKey) && e.key === '-') onZoom(-0.2);
+    });
+</script>
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>
