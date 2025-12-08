@@ -405,13 +405,22 @@ class AdminController {
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_TIMEOUT => 30,
+            CURLOPT_MAXREDIRS => 5,
+            CURLOPT_CONNECTTIMEOUT => 15,
+            CURLOPT_TIMEOUT => 60,
+            CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+            CURLOPT_ENCODING => '',
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
-            CURLOPT_HTTPHEADER => ['Accept: application/pdf']
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            CURLOPT_HTTPHEADER => [
+                'Accept: application/pdf,application/octet-stream;q=0.9,*/*;q=0.8',
+                'Referer: ' . BASE_URL
+            ]
         ]);
         $body = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
         curl_close($ch);
         if ($httpCode >= 200 && $httpCode < 300 && $body) {
             header('Content-Type: application/pdf');
@@ -420,7 +429,8 @@ class AdminController {
             exit;
         }
         http_response_code(502);
-        echo 'Failed to fetch receipt';
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => 'Failed to fetch receipt', 'status' => $httpCode, 'content_type' => $contentType]);
         exit;
     }
 

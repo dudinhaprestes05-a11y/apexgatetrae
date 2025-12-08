@@ -236,6 +236,7 @@ require_once __DIR__ . '/../layouts/header.php';
                 <p class="text-sm text-gray-600 mb-4">Visualize o comprovante PDF sem sair da página.</p>
                 <button id="openPdfViewerBtn"
                         data-url="/admin/transactions/receipt?transaction_id=<?= urlencode($transaction['transaction_id']) ?>&type=cashout"
+                        data-external-url="<?= htmlspecialchars($transaction['receipt_url']) ?>"
                         class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
                     <i class="fas fa-file-pdf mr-2"></i>Ver Comprovante (PDF)
                 </button>
@@ -270,7 +271,10 @@ require_once __DIR__ . '/../layouts/header.php';
                 <div class="alert alert-error">
                     <div class="flex items-center space-x-2">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <span>Não foi possível carregar o PDF. Tente novamente.</span>
+                        <span>Não foi possível carregar o PDF.</span>
+                    </div>
+                    <div class="mt-3 flex justify-center">
+                        <a id="pdfErrorOpenLink" href="#" target="_blank" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Abrir em nova guia</a>
                     </div>
                 </div>
             </div>
@@ -302,6 +306,7 @@ require_once __DIR__ . '/../layouts/header.php';
     let pageNumPending = null;
     let scale = 1.0;
     let pdfUrl = null;
+    let externalUrl = null;
 
     function openModal() {
         modal.classList.remove('hidden');
@@ -388,15 +393,20 @@ require_once __DIR__ . '/../layouts/header.php';
             pageCountEl.textContent = pdf.numPages;
             renderPage(1);
         }).catch(function() {
-            iframeFallback.src = url;
-            iframeFallback.classList.remove('hidden');
             loader.classList.add('hidden');
+            errorBox.classList.remove('hidden');
+            const link = document.getElementById('pdfErrorOpenLink');
+            if (link && externalUrl) {
+                link.href = externalUrl;
+                link.target = '_blank';
+            }
         });
     }
 
     if (openBtn) {
         openBtn.addEventListener('click', function() {
             pdfUrl = this.getAttribute('data-url');
+            externalUrl = this.getAttribute('data-external-url');
             openModal();
             initPdf(pdfUrl);
         });
