@@ -111,6 +111,26 @@ class WebhookController {
 
                 $parsedData['transaction_id'] = $transactionId;
                 $data = $parsedData;
+            } elseif ($acquirer['code'] === 'velana') {
+                require_once __DIR__ . '/../../services/VelanaService.php';
+                $velana = new VelanaService($acquirer);
+                $parsedData = $velana->parseWebhook($data);
+
+                if (!$parsedData) {
+                    throw new Exception('Failed to parse Velana webhook');
+                }
+
+                $transactionId = $this->findTransactionIdByAcquirerId(
+                    $parsedData['acquirer_transaction_id'],
+                    $parsedData['transaction_type']
+                );
+
+                if (!$transactionId) {
+                    throw new Exception('Transaction not found for acquirer_transaction_id: ' . $parsedData['acquirer_transaction_id']);
+                }
+
+                $parsedData['transaction_id'] = $transactionId;
+                $data = $parsedData;
             }
 
             $transactionId = $data['transaction_id'] ?? null;
@@ -242,6 +262,10 @@ class WebhookController {
             $updateData['end_to_end_id'] = $data['end_to_end_id'];
         }
 
+        if (isset($data['receipt_url'])) {
+            $updateData['receipt_url'] = $data['receipt_url'];
+        }
+
         if ($data['status'] === 'failed') {
             $this->sellerModel->updateBalance($transaction['seller_id'], $transaction['amount']);
 
@@ -297,29 +321,46 @@ class WebhookController {
                 return false;
             }
 
-            if ($account['acquirer_code'] !== 'podpay') {
-                $this->logModel->info('webhook', 'Webhook verification skipped for non-PodPay acquirer', [
+            if ($account['acquirer_code'] === 'podpay') {
+                require_once __DIR__ . '/../../services/PodPayService.php';
+                $podpay = new PodPayService($account);
+
+                $consultResult = $podpay->consultTransaction($webhookData['acquirer_transaction_id']);
+
+                if (!$consultResult['success']) {
+                    $this->logModel->error('webhook', 'Failed to consult transaction with acquirer', [
+                        'transaction_id' => $transaction['transaction_id'],
+                        'acquirer_transaction_id' => $webhookData['acquirer_transaction_id'],
+                        'error' => $consultResult['error']
+                    ]);
+                    return false;
+                }
+
+                $consultedData = $consultResult['data'];
+                $mappedStatus = $this->mapPodPayTransactionStatus($consultedData['status']);
+            } elseif ($account['acquirer_code'] === 'velana') {
+                require_once __DIR__ . '/../../services/VelanaService.php';
+                $velana = new VelanaService($account);
+
+                $consultResult = $velana->consultTransaction($webhookData['acquirer_transaction_id']);
+
+                if (!$consultResult['success']) {
+                    $this->logModel->error('webhook', 'Failed to consult Velana transaction', [
+                        'transaction_id' => $transaction['transaction_id'],
+                        'acquirer_transaction_id' => $webhookData['acquirer_transaction_id'],
+                        'error' => $consultResult['error']
+                    ]);
+                    return false;
+                }
+
+                $consultedData = $consultResult['data'];
+                $mappedStatus = $this->mapVelanaTransactionStatus($consultedData['status']);
+            } else {
+                $this->logModel->info('webhook', 'Webhook verification skipped for unsupported acquirer', [
                     'acquirer_code' => $account['acquirer_code']
                 ]);
                 return true;
             }
-
-            require_once __DIR__ . '/../../services/PodPayService.php';
-            $podpay = new PodPayService($account);
-
-            $consultResult = $podpay->consultTransaction($webhookData['acquirer_transaction_id']);
-
-            if (!$consultResult['success']) {
-                $this->logModel->error('webhook', 'Failed to consult transaction with acquirer', [
-                    'transaction_id' => $transaction['transaction_id'],
-                    'acquirer_transaction_id' => $webhookData['acquirer_transaction_id'],
-                    'error' => $consultResult['error']
-                ]);
-                return false;
-            }
-
-            $consultedData = $consultResult['data'];
-            $mappedStatus = $this->mapPodPayTransactionStatus($consultedData['status']);
 
             if ($mappedStatus !== $webhookData['status']) {
                 $this->logModel->error('webhook', 'Status mismatch between webhook and API consultation', [
@@ -388,29 +429,50 @@ class WebhookController {
                 return false;
             }
 
-            if ($account['acquirer_code'] !== 'podpay') {
-                $this->logModel->info('webhook', 'Webhook verification skipped for non-PodPay acquirer', [
+            if ($account['acquirer_code'] === 'podpay') {
+                require_once __DIR__ . '/../../services/PodPayService.php';
+                $podpay = new PodPayService($account);
+
+                $consultResult = $podpay->consultTransfer($webhookData['acquirer_transaction_id']);
+
+                if (!$consultResult['success']) {
+                    $this->logModel->error('webhook', 'Failed to consult transfer with acquirer', [
+                        'transaction_id' => $transaction['transaction_id'],
+                        'acquirer_transaction_id' => $webhookData['acquirer_transaction_id'],
+                        'error' => $consultResult['error']
+                    ]);
+                    return false;
+                }
+
+                $consultedData = $consultResult['data'];
+                $mappedStatus = $this->mapPodPayWithdrawStatus($consultedData['status']);
+            } elseif ($account['acquirer_code'] === 'velana') {
+                require_once __DIR__ . '/../../services/VelanaService.php';
+                $velana = new VelanaService($account);
+
+                $consultResult = $velana->consultTransfer($webhookData['acquirer_transaction_id']);
+
+                if (!$consultResult['success']) {
+                    $this->logModel->error('webhook', 'Failed to consult Velana transfer', [
+                        'transaction_id' => $transaction['transaction_id'],
+                        'acquirer_transaction_id' => $webhookData['acquirer_transaction_id'],
+                        'error' => $consultResult['error']
+                    ]);
+                    return false;
+                }
+
+                $consultedData = $consultResult['data'];
+                $mappedStatus = $this->mapVelanaWithdrawStatus($consultedData['status']);
+
+                if (isset($consultedData['receipt_url']) && $consultedData['receipt_url']) {
+                    $webhookData['receipt_url'] = $consultedData['receipt_url'];
+                }
+            } else {
+                $this->logModel->info('webhook', 'Webhook verification skipped for unsupported acquirer', [
                     'acquirer_code' => $account['acquirer_code']
                 ]);
                 return true;
             }
-
-            require_once __DIR__ . '/../../services/PodPayService.php';
-            $podpay = new PodPayService($account);
-
-            $consultResult = $podpay->consultTransfer($webhookData['acquirer_transaction_id']);
-
-            if (!$consultResult['success']) {
-                $this->logModel->error('webhook', 'Failed to consult transfer with acquirer', [
-                    'transaction_id' => $transaction['transaction_id'],
-                    'acquirer_transaction_id' => $webhookData['acquirer_transaction_id'],
-                    'error' => $consultResult['error']
-                ]);
-                return false;
-            }
-
-            $consultedData = $consultResult['data'];
-            $mappedStatus = $this->mapPodPayWithdrawStatus($consultedData['status']);
 
             if ($mappedStatus !== $webhookData['status']) {
                 $this->logModel->error('webhook', 'Status mismatch between webhook and API consultation', [
@@ -486,5 +548,30 @@ class WebhookController {
         ];
 
         return $statusMap[$podpayStatus] ?? 'processing';
+    }
+
+    private function mapVelanaTransactionStatus($velanaStatus) {
+        $statusMap = [
+            'waiting_payment' => 'waiting_payment',
+            'paid' => 'paid',
+            'refused' => 'failed',
+            'cancelled' => 'cancelled',
+            'expired' => 'expired'
+        ];
+
+        return $statusMap[$velanaStatus] ?? 'waiting_payment';
+    }
+
+    private function mapVelanaWithdrawStatus($velanaStatus) {
+        $statusMap = [
+            'in_analysis' => 'processing',
+            'pending' => 'processing',
+            'processing' => 'processing',
+            'success' => 'completed',
+            'failed' => 'failed',
+            'cancelled' => 'cancelled'
+        ];
+
+        return $statusMap[$velanaStatus] ?? 'processing';
     }
 }

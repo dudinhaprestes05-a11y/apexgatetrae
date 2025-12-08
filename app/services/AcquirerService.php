@@ -33,6 +33,11 @@ class AcquirerService {
                 $podpay = new PodPayService($acquirer);
 
                 $response = $podpay->createPixTransaction($data);
+            } elseif ($acquirer['code'] === 'velana') {
+                require_once __DIR__ . '/VelanaService.php';
+                $velana = new VelanaService($acquirer);
+
+                $response = $velana->createPixTransaction($data);
             } else {
                 $payload = [
                     'transaction_id' => $data['transaction_id'],
@@ -91,6 +96,11 @@ class AcquirerService {
                 $podpay = new PodPayService($acquirer);
 
                 $response = $podpay->createTransfer($data);
+            } elseif ($acquirer['code'] === 'velana') {
+                require_once __DIR__ . '/VelanaService.php';
+                $velana = new VelanaService($acquirer);
+
+                $response = $velana->createTransfer($data);
             } else {
                 $payload = [
                     'transaction_id' => $data['transaction_id'],
@@ -145,6 +155,15 @@ class AcquirerService {
                     $response = $podpay->consultTransfer($transactionId);
                 } else {
                     $response = $podpay->consultTransaction($transactionId);
+                }
+            } elseif ($acquirer['code'] === 'velana') {
+                require_once __DIR__ . '/VelanaService.php';
+                $velana = new VelanaService($acquirer);
+
+                if ($isCashout) {
+                    $response = $velana->consultTransfer($transactionId);
+                } else {
+                    $response = $velana->consultTransaction($transactionId);
                 }
             } else {
                 $response = $this->sendRequest($acquirer, "/pix/consult/{$transactionId}", null, 'GET');
@@ -210,6 +229,15 @@ class AcquirerService {
                     $response = $podpay->consultTransfer($transactionData['acquirer_transaction_id']);
                 } else {
                     $response = $podpay->consultTransaction($transactionData['acquirer_transaction_id']);
+                }
+            } elseif ($transactionData['acquirer_code'] === 'velana') {
+                require_once __DIR__ . '/VelanaService.php';
+                $velana = new VelanaService($accountData);
+
+                if ($isCashout) {
+                    $response = $velana->consultTransfer($transactionData['acquirer_transaction_id']);
+                } else {
+                    $response = $velana->consultTransaction($transactionData['acquirer_transaction_id']);
                 }
             } else {
                 $response = $this->sendRequest($accountData, "/pix/consult/{$transactionData['acquirer_transaction_id']}", null, 'GET');
