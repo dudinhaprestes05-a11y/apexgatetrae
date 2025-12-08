@@ -23,11 +23,6 @@
   - Main account with higher priority (priority 1)
   - Backup account with lower priority (priority 2)
 
-  ## Daily Limits
-
-  - Set appropriate daily limits based on your Velana account balance
-  - The system will automatically track daily usage
-  - Limits reset daily at midnight
 */
 
 -- Verify Velana acquirer exists
@@ -44,10 +39,7 @@ INSERT INTO acquirer_accounts (
     merchant_id,
     base_url,
     priority,
-    status,
-    daily_limit,
-    daily_used,
-    daily_reset_at
+    status
 ) VALUES (
     (SELECT id FROM acquirers WHERE code = 'velana'),
     'Velana - Conta Principal',
@@ -56,10 +48,7 @@ INSERT INTO acquirer_accounts (
     NULL,  -- Not used by Velana
     NULL,  -- Uses default API URL from acquirers table
     1,  -- Highest priority
-    'active',
-    50000.00,  -- R$ 50,000 daily limit
-    0.00,
-    CURDATE()
+    'active'
 );
 
 -- Example 2: Configure backup Velana account (optional)
@@ -71,10 +60,7 @@ INSERT INTO acquirer_accounts (
     merchant_id,
     base_url,
     priority,
-    status,
-    daily_limit,
-    daily_used,
-    daily_reset_at
+    status
 ) VALUES (
     (SELECT id FROM acquirers WHERE code = 'velana'),
     'Velana - Conta Backup',
@@ -83,10 +69,7 @@ INSERT INTO acquirer_accounts (
     NULL,
     NULL,
     2,  -- Lower priority (fallback)
-    'active',
-    30000.00,  -- R$ 30,000 daily limit
-    0.00,
-    CURDATE()
+    'active'
 );
 
 -- View all configured Velana accounts
@@ -95,9 +78,6 @@ SELECT
     acc.name,
     acc.priority,
     acc.status,
-    acc.daily_limit,
-    acc.daily_used,
-    acc.daily_reset_at,
     acq.name as acquirer_name,
     acq.code as acquirer_code
 FROM acquirer_accounts acc

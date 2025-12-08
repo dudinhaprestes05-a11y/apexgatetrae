@@ -43,9 +43,6 @@ CREATE TABLE IF NOT EXISTS `acquirer_accounts` (
   `base_url` VARCHAR(500) DEFAULT NULL COMMENT 'Override base URL if different from acquirer',
   `priority` INT DEFAULT 1 COMMENT 'Priority order (lower = higher priority)',
   `status` ENUM('active', 'inactive', 'maintenance') DEFAULT 'active',
-  `daily_limit` DECIMAL(15,2) DEFAULT 100000.00,
-  `daily_used` DECIMAL(15,2) DEFAULT 0.00,
-  `daily_reset_at` DATE NOT NULL,
   `config` JSON DEFAULT NULL COMMENT 'Additional configuration',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -129,8 +126,8 @@ CALL add_receipt_url_to_cashout();
 DROP PROCEDURE add_receipt_url_to_cashout;
 
 -- Register Velana acquirer if it doesn't exist
-INSERT INTO `acquirers` (`name`, `code`, `api_url`, `priority_order`, `status`, `daily_limit`, `daily_reset_at`)
-SELECT 'Velana', 'velana', 'https://api.velana.com.br', 3, 'active', 100000.00, CURDATE()
+INSERT INTO `acquirers` (`name`, `code`, `api_url`, `priority_order`, `status`)
+SELECT 'Velana', 'velana', 'https://api.velana.com.br', 3, 'active'
 WHERE NOT EXISTS (
   SELECT 1 FROM `acquirers` WHERE `code` = 'velana'
 );
