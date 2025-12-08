@@ -73,7 +73,8 @@ CREATE TABLE IF NOT EXISTS `seller_acquirer_accounts` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Add acquirer_account_id to pix_cashin if it doesn't exist
-DO $$
+DELIMITER $$
+CREATE PROCEDURE add_acquirer_account_id_to_cashin()
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
@@ -85,10 +86,14 @@ BEGIN
     ADD COLUMN `acquirer_account_id` INT UNSIGNED DEFAULT NULL AFTER `acquirer_id`,
     ADD INDEX `idx_acquirer_account_id` (`acquirer_account_id`);
   END IF;
-END $$;
+END$$
+DELIMITER ;
+CALL add_acquirer_account_id_to_cashin();
+DROP PROCEDURE add_acquirer_account_id_to_cashin;
 
 -- Add acquirer_account_id to pix_cashout if it doesn't exist
-DO $$
+DELIMITER $$
+CREATE PROCEDURE add_acquirer_account_id_to_cashout()
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
@@ -100,10 +105,14 @@ BEGIN
     ADD COLUMN `acquirer_account_id` INT UNSIGNED DEFAULT NULL AFTER `acquirer_id`,
     ADD INDEX `idx_acquirer_account_id` (`acquirer_account_id`);
   END IF;
-END $$;
+END$$
+DELIMITER ;
+CALL add_acquirer_account_id_to_cashout();
+DROP PROCEDURE add_acquirer_account_id_to_cashout;
 
 -- Add receipt_url to pix_cashout if it doesn't exist (for Velana PDF receipts)
-DO $$
+DELIMITER $$
+CREATE PROCEDURE add_receipt_url_to_cashout()
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
@@ -114,7 +123,10 @@ BEGIN
     ALTER TABLE `pix_cashout`
     ADD COLUMN `receipt_url` VARCHAR(500) DEFAULT NULL COMMENT 'Receipt URL from acquirer' AFTER `end_to_end_id`;
   END IF;
-END $$;
+END$$
+DELIMITER ;
+CALL add_receipt_url_to_cashout();
+DROP PROCEDURE add_receipt_url_to_cashout;
 
 -- Register Velana acquirer if it doesn't exist
 INSERT INTO `acquirers` (`name`, `code`, `api_url`, `priority_order`, `status`, `daily_limit`, `daily_reset_at`)
