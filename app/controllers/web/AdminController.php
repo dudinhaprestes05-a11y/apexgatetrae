@@ -384,6 +384,46 @@ class AdminController {
         require __DIR__ . '/../../views/admin/transaction-details.php';
     }
 
+    public function viewReceipt() {
+        $transactionId = $_GET['transaction_id'] ?? null;
+        $type = $_GET['type'] ?? 'cashout';
+        if (!$transactionId) {
+            http_response_code(400);
+            echo 'transaction_id is required';
+            exit;
+        }
+        $transaction = $type === 'cashin'
+            ? $this->cashinModel->findByTransactionId($transactionId)
+            : $this->cashoutModel->findByTransactionId($transactionId);
+        if (!$transaction || empty($transaction['receipt_url'])) {
+            http_response_code(404);
+            echo 'Receipt not available';
+            exit;
+        }
+        $url = $transaction['receipt_url'];
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_HTTPHEADER => ['Accept: application/pdf']
+        ]);
+        $body = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($httpCode >= 200 && $httpCode < 300 && $body) {
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: inline; filename="receipt.pdf"');
+            echo $body;
+            exit;
+        }
+        http_response_code(502);
+        echo 'Failed to fetch receipt';
+        exit;
+    }
+
     public function acquirers() {
         $acquirers = $this->acquirerModel->getAllWithAccountCount();
         require __DIR__ . '/../../views/admin/acquirers.php';

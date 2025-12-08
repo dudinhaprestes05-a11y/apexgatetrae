@@ -235,7 +235,7 @@ require_once __DIR__ . '/../layouts/header.php';
                 <h3 class="font-bold text-gray-900 mb-4">Comprovante</h3>
                 <p class="text-sm text-gray-600 mb-4">Visualize o comprovante PDF sem sair da página.</p>
                 <button id="openPdfViewerBtn"
-                        data-url="<?= htmlspecialchars($transaction['receipt_url']) ?>"
+                        data-url="/admin/transactions/receipt?transaction_id=<?= urlencode($transaction['transaction_id']) ?>&type=cashout"
                         class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
                     <i class="fas fa-file-pdf mr-2"></i>Ver Comprovante (PDF)
                 </button>

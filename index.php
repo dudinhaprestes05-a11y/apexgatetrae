@@ -240,6 +240,11 @@ try {
         $controller = new AdminController();
         $controller->transactions();
     }
+    elseif ($uri === '/admin/transactions/receipt' && $method === 'GET') {
+        require_once __DIR__ . '/app/controllers/web/AdminController.php';
+        $controller = new AdminController();
+        $controller->viewReceipt();
+    }
     elseif (preg_match('#^/admin/transactions/(\d+)/(cashin|cashout)$#', $uri, $matches)) {
         require_once __DIR__ . '/app/controllers/web/AdminController.php';
         $controller = new AdminController();
