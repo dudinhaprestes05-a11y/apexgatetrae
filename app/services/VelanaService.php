@@ -16,7 +16,7 @@ class VelanaService {
             $this->acquirer = $acquirer;
             $this->apiUrl = rtrim($acquirer['api_url'] ?? $acquirer['base_url'] ?? 'https://api.velana.com.br', '/');
 
-            $secretKey = $acquirer['client_id'] ?? $acquirer['api_key'] ?? '';
+            $secretKey = $acquirer['client_secret'] ?? $acquirer['api_key'] ?? '';
 
             $this->authToken = base64_encode($secretKey . ':x');
         }
