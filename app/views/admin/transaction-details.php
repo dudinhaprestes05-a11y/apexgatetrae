@@ -279,7 +279,7 @@ require_once __DIR__ . '/../layouts/header.php';
                 </div>
             </div>
             <canvas id="pdfCanvas" class="mx-auto block hidden" style="display:none!important; max-width:100%; height:auto"></canvas>
-            <iframe id="pdfIframeFallback" class="hidden w-full h-full"></iframe>
+>
         </div>
     </div>
 </div>
@@ -293,7 +293,7 @@ require_once __DIR__ . '/../layouts/header.php';
     const errorBox = document.getElementById('pdfError');
     const canvas = document.getElementById('pdfCanvas');
     const ctx = canvas ? canvas.getContext('2d') : null;
-    const iframeFallback = document.getElementById('pdfIframeFallback');
+
     const prevBtn = document.getElementById('prevPageBtn');
     const nextBtn = document.getElementById('nextPageBtn');
     const zoomInBtn = document.getElementById('zoomInBtn');
@@ -322,7 +322,7 @@ require_once __DIR__ . '/../layouts/header.php';
         scale = 1.0;
         loader.classList.add('hidden');
         errorBox.classList.add('hidden');
-        // iframeFallback.classList.add('hidden');
+
     }
 
     function renderPage(num) {
@@ -337,6 +337,7 @@ require_once __DIR__ . '/../layouts/header.php';
             const renderContext = { canvasContext: ctx, viewport: vp };
             const renderTask = page.render(renderContext);
             renderTask.promise.then(function() {
+                canvas.classList.remove('hidden');
                 pageRendering = false;
                 if (pageNumPending !== null) {
                     renderPage(pageNumPending);
@@ -345,6 +346,7 @@ require_once __DIR__ . '/../layouts/header.php';
                 loader.classList.add('hidden');
             });
         }).catch(function() {
+            canvas.classList.add('hidden');
             errorBox.classList.remove('hidden');
             loader.classList.add('hidden');
         });
@@ -380,11 +382,15 @@ require_once __DIR__ . '/../layouts/header.php';
     function initPdf(url) {
         loader.classList.remove('hidden');
         errorBox.classList.add('hidden');
-        iframeFallback.classList.add('hidden');
+        canvas.classList.add('hidden');
         if (!window['pdfjsLib']) {
-            iframeFallback.src = url;
-            iframeFallback.classList.remove('hidden');
             loader.classList.add('hidden');
+            errorBox.classList.remove('hidden');
+            const link = document.getElementById('pdfErrorOpenLink');
+            if (link && externalUrl) {
+                link.href = externalUrl;
+                link.target = '_blank';
+            }
             return;
         }
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.js';
