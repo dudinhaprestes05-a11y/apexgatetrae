@@ -278,7 +278,7 @@ require_once __DIR__ . '/../layouts/header.php';
                     </div>
                 </div>
             </div>
-            <canvas id="pdfCanvas" class="mx-auto block"></canvas>
+            <canvas id="pdfCanvas" class="mx-auto block hidden" style="display:none!important; max-width:100%; height:auto"></canvas>
             <iframe id="pdfIframeFallback" class="hidden w-full h-full"></iframe>
         </div>
     </div>
@@ -322,7 +322,7 @@ require_once __DIR__ . '/../layouts/header.php';
         scale = 1.0;
         loader.classList.add('hidden');
         errorBox.classList.add('hidden');
-        iframeFallback.classList.add('hidden');
+        // iframeFallback.classList.add('hidden');
     }
 
     function renderPage(num) {
