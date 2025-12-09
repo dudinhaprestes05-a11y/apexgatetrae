@@ -247,7 +247,7 @@ require_once __DIR__ . '/../layouts/header.php';
 </div>
 
 <div id="pdfViewerModal" class="modal hidden">
-        <div class="modal-content max-w-6xl w-full" style="overflow:hidden">
+        <div class="modal-content max-w-6xl w-full">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-xl font-bold text-white">Comprovante PIX</h3>
             <button id="closePdfViewerBtn" class="px-3 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600"><i class="fas fa-times"></i></button>
@@ -263,7 +263,7 @@ require_once __DIR__ . '/../layouts/header.php';
                 <button id="zoomInBtn" class="px-3 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600"><i class="fas fa-search-plus"></i></button>
             </div>
         </div>
-        <div id="pdfContainer" class="relative bg-slate-800 rounded-lg border border-slate-700 overflow-auto scrollbar-thin" style="max-height: calc(90vh - 140px); overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
+        <div id="pdfContainer" class="relative bg-slate-800 rounded-lg border border-slate-700 overflow-auto scrollbar-thin h-[80vh]" style="overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
             <div id="pdfLoader" class="absolute inset-0 flex items-center justify-center">
                 <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
