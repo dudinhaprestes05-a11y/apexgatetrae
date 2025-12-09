@@ -198,6 +198,11 @@ $currentPath = $_SERVER['REQUEST_URI'];
             background: #475569;
         }
 
+        .scrollbar-thin {
+            scrollbar-width: thin;
+            scrollbar-color: #475569 #1e293b;
+        }
+
         .modal {
             position: fixed;
             top: 0;

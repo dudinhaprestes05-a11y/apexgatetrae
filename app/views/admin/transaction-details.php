@@ -279,7 +279,7 @@ require_once __DIR__ . '/../layouts/header.php';
                 </div>
             </div>
             <canvas id="pdfCanvas" class="mx-auto block hidden" style="display:none!important; max-width:100%; height:auto"></canvas>
-            <iframe id="pdfIframeFallback" class="hidden w-full h-full"></iframe>
+            <iframe id="pdfIframeFallback" class="hidden w-full h-full scrollbar-thin pdf-iframe"></iframe>
         </div>
     </div>
 </div>
@@ -300,6 +300,7 @@ require_once __DIR__ . '/../layouts/header.php';
     const zoomOutBtn = document.getElementById('zoomOutBtn');
     const pageNumEl = document.getElementById('pageNum');
     const pageCountEl = document.getElementById('pageCount');
+    const pdfContainer = document.getElementById('pdfContainer');
     let pdfDoc = null;
     let pageNum = 1;
     let pageRendering = false;
@@ -322,7 +323,8 @@ require_once __DIR__ . '/../layouts/header.php';
         scale = 1.0;
         loader.classList.add('hidden');
         errorBox.classList.add('hidden');
-        // iframeFallback.classList.add('hidden');
+        if (iframeFallback) iframeFallback.classList.add('hidden');
+        if (pdfContainer) pdfContainer.style.overflow = 'auto';
     }
 
     function renderPage(num) {
@@ -382,8 +384,10 @@ require_once __DIR__ . '/../layouts/header.php';
         errorBox.classList.add('hidden');
         iframeFallback.classList.add('hidden');
         if (!window['pdfjsLib']) {
-            iframeFallback.src = url;
+            canvas.classList.add('hidden');
+            iframeFallback.src = externalUrl || url;
             iframeFallback.classList.remove('hidden');
+            if (pdfContainer) pdfContainer.style.overflow = 'hidden';
             loader.classList.add('hidden');
             return;
         }
