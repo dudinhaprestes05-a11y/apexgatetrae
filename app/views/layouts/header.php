@@ -197,6 +197,40 @@ $currentPath = $_SERVER['REQUEST_URI'];
         .scrollbar-thin::-webkit-scrollbar-thumb:hover {
             background: #475569;
         }
+        .scrollbar-thin {
+            scrollbar-width: thin;
+            scrollbar-color: #475569 #1e293b;
+        }
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 8px;
+            border: 2px solid #0f172a;
+        }
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        #pdfContainer::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        #pdfContainer::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        #pdfContainer::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 8px;
+            border: 2px solid #0f172a;
+        }
+        #pdfContainer::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
 
         .modal {
             position: fixed;
@@ -224,6 +258,8 @@ $currentPath = $_SERVER['REQUEST_URI'];
             overflow-y: auto;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             animation: modalFadeIn 0.2s ease-out;
+            scrollbar-width: thin;
+            scrollbar-color: #475569 #0f172a;
         }
 
         @keyframes modalFadeIn {
