@@ -275,8 +275,8 @@ Content-Type: application/json</pre>
                                     <tr class="border-t border-slate-700">
                                         <td class="p-3"><code class="text-blue-400">customer</code></td>
                                         <td class="p-3">object</td>
-                                        <td class="p-3"><span class="text-slate-500">Não</span></td>
-                                        <td class="p-3">Dados do cliente (name, document, email)</td>
+                                        <td class="p-3"><span class="text-green-400">Sim</span></td>
+                                        <td class="p-3">Dados do cliente (name, document, email) — todos obrigatórios</td>
                                     </tr>
                                     <tr class="border-t border-slate-700">
                                         <td class="p-3"><code class="text-blue-400">external_id</code></td>

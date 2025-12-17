@@ -77,7 +77,15 @@ curl -X POST https://gateway.seudominio.com/api/pix/create \
   -H "X-API-Key: sua_api_key" \
   -H "X-API-Secret: seu_api_secret" \
   -H "Content-Type: application/json" \
-  -d '{"amount": 100.50}'
+  -d '{
+    "amount": 100.50,
+    "external_id": "pedido-123",
+    "customer": {
+      "name": "João Silva",
+      "document": "12345678900",
+      "email": "joao@example.com"
+    }
+  }'
 ```
 
 ### Segurança da Autenticação
@@ -139,10 +147,10 @@ Cria uma nova transação de recebimento PIX.
 - `external_id` (string, opcional): ID externo da transação no seu sistema
 - `pix_type` (string, opcional): Tipo do PIX (dynamic, static, qrcode). Default: dynamic
 - `expires_in_minutes` (int, opcional): Tempo de expiração em minutos. Default: 30
-- `customer` (object, opcional): Dados do cliente pagador
-  - `name` (string): Nome do cliente
-  - `email` (string): Email do cliente
-  - `document` (string): CPF ou CNPJ do cliente
+- `customer` (object, obrigatório): Dados do cliente pagador
+  - `name` (string, obrigatório)
+  - `email` (string, obrigatório, formato válido)
+  - `document` (string, obrigatório, CPF ou CNPJ válido)
 - `metadata` (object, opcional): Dados adicionais
 - `splits` (array, opcional): Divisão de pagamento entre sellers
 

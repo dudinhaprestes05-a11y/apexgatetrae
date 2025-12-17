@@ -225,8 +225,8 @@ crontab -e
 curl -X POST https://gateway.com/api/pix/create \
   -H "Content-Type: application/json" \
   -H "X-API-Key: sk_test_demo_key_123456789" \
-  -H "X-Signature: $(echo -n '{"amount":100}' | openssl dgst -sha256 -hmac 'secret')" \
-  -d '{"amount": 100.00}'
+  -H "X-Signature: $(echo -n '{"external_id":"TEST001","amount":100.00,"customer":{"name":"Teste","document":"12345678900","email":"teste@test.com"}}' | openssl dgst -sha256 -hmac 'secret' | sed 's/^.* //')" \
+  -d '{"external_id":"TEST001","amount":100.00,"customer":{"name":"Teste","document":"12345678900","email":"teste@test.com"}}'
 ```
 
 ### Resposta

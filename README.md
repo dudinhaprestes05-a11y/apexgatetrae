@@ -117,8 +117,14 @@ POST /api/pix/create
 
 {
   "amount": 100.50,
+  "external_id": "pedido-123",
   "pix_type": "dynamic",
   "expires_in_minutes": 30,
+  "customer": {
+    "name": "João Silva",
+    "document": "12345678900",
+    "email": "joao@example.com"
+  },
   "metadata": {
     "order_id": "12345"
   },

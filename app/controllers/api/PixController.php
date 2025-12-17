@@ -72,6 +72,25 @@ class PixController {
             }
         }
 
+        if (!isset($input['customer']) || !is_array($input['customer'])) {
+            errorResponse("Field 'customer' is required", 400);
+        }
+
+        $customer = $input['customer'];
+        foreach (['name', 'document', 'email'] as $sub) {
+            if (!isset($customer[$sub]) || trim((string)$customer[$sub]) === '') {
+                errorResponse("Field 'customer.{$sub}' is required", 400);
+            }
+        }
+
+        if (!validateEmail($customer['email'])) {
+            errorResponse("Invalid customer email", 400);
+        }
+
+        if (!validateCpfCnpj($customer['document'])) {
+            errorResponse("Invalid customer document", 400);
+        }
+
         $amount = (float) $input['amount'];
 
         if ($amount <= 0) {
@@ -143,9 +162,9 @@ class PixController {
         $pixType = $input['pix_type'] ?? 'dynamic';
 
         $customerData = [
-            'name' => $input['customer']['name'] ?? $seller['name'],
-            'email' => $input['customer']['email'] ?? $seller['email'],
-            'document' => $input['customer']['document'] ?? $seller['document']
+            'name' => trim($input['customer']['name']),
+            'email' => trim(strtolower($input['customer']['email'])),
+            'document' => $input['customer']['document']
         ];
 
         $acquirerData = [
